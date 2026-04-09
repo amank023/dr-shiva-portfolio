@@ -1,4 +1,4 @@
-# Dr. Shiva Nand Singh Portfolio
+# Dr. Shiva Singh Portfolio
 ## React 18 + Node.js + TailwindCSS + lowdb
 
 ### Run Locally
