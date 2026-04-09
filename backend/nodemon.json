@@ -1,0 +1,6 @@
+{
+  "watch": ["."],
+  "ext": "js",
+  "ignore": ["db/portfolio.json"],
+  "exec": "node server.js"
+}
