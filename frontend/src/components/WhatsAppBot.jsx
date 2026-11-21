@@ -1,15 +1,18 @@
 import { useState, useRef, useEffect } from 'react'
-import { logChat } from '../hooks/api'
+import { logChat, createAppointment } from '../hooks/api'
+import { usePortfolioContent } from '../context/ContentContext'
 
 const FLOW = {
-  init:     { msg:`👋 Hello! I'm the assistant for *Dr. Shiva Singh*.\n\nHow can I help you today?`, quick:['ℹ️ About Dr. Singh','🏥 Services','📞 Contact Info','🕐 Consultation Hours','⭐ Leave a Review'] },
-  about:    { msg:`👨‍⚕️ *Dr. Shiva Singh*\nMBBS, B.Sc. Critical Care Medicine\nReg. 79855 · 7+ years experience\n\nSpecializes in ICU, ventilator management, and advanced critical care.`, quick:['🔙 Main Menu'] },
-  services: { msg:`🏥 *Services:*\n• ICU/Critical Care Consultation\n• Ventilator Management\n• ACLS & Emergency Care\n• Echocardiography\n• Haemodynamic Monitoring`, quick:['🔙 Main Menu'] },
+  init:     { msg:`👋 Hello! I'm the assistant for *Dr. Shiva Singh*.\n\nHow can I help you today?`, quick:['📅 Book Appointment','ℹ️ About Dr. Singh','🏥 Services','📞 Contact Info','🕐 Consultation Hours','⭐ Leave a Review'] },
+  about:    { msg:`👨‍⚕️ *Dr. Shiva Singh*\nMBBS, B.Sc. Critical Care Medicine\nReg. 79855 · 7+ years experience\n\nSpecializes in ICU, ventilator management, and advanced critical care.`, quick:['📅 Book Appointment','🔙 Main Menu'] },
+  services: { msg:`🏥 *Services:*\n• ICU/Critical Care Consultation\n• Ventilator Management\n• ACLS & Emergency Care\n• Echocardiography\n• Haemodynamic Monitoring`, quick:['📅 Book Appointment','🔙 Main Menu'] },
   contact:  { msg:`📞 +91-9889527343\n✉️ askdrshivasingh@gmail.com\n📍 Sahara City Homes, IIM Road, Lucknow`, quick:['💬 Open WhatsApp','🔙 Main Menu'] },
-  hours:    { msg:`🕐 *Consultation Hours:*\nMon–Sat · 9:00 AM – 12:00 PM\nMon–Sat · 4:00 PM – 7:00 PM\nSunday: By appointment only`, quick:['🔙 Main Menu'] },
+  hours:    { msg:`🕐 *Consultation Hours:*\nMon–Sat · 9:00 AM – 12:00 PM\nMon–Sat · 4:00 PM – 7:00 PM\nSunday: By appointment only`, quick:['📅 Book Appointment','🔙 Main Menu'] },
 }
 
 export default function WhatsAppBot() {
+  const { content }        = usePortfolioContent()
+  const photo              = content?.profile?.photo || '/doctor.jpg'
   const [open,setOpen]     = useState(false)
   const [badge,setBadge]   = useState(false)
   const [msgs,setMsgs]     = useState([])
@@ -33,6 +36,7 @@ export default function WhatsAppBot() {
   const handleQuick = (q) => {
     addUser(q)
     if(q==='🔙 Main Menu')           { setState('init');    addTyping(FLOW.init.msg,    FLOW.init.quick,    600); return }
+    if(q==='📅 Book Appointment')    { setState('book_name'); addTyping(`I'll help you schedule an appointment with Dr. Shiva Singh 🗓️\n\nPlease share your *full name*:`); return }
     if(q==='ℹ️ About Dr. Singh')     { setState('about');   addTyping(FLOW.about.msg,   FLOW.about.quick);  return }
     if(q==='🏥 Services')            { setState('services');addTyping(FLOW.services.msg,FLOW.services.quick);return }
     if(q==='📞 Contact Info')        { setState('contact'); addTyping(FLOW.contact.msg, FLOW.contact.quick);return }
@@ -45,18 +49,56 @@ export default function WhatsAppBot() {
       setUd(u=>({...u,type})); setState('book_date')
       addTyping(`*${type}* selected ✅\n\nPlease share your *preferred date* (e.g., 25 March 2026).`); return
     }
-    handleInput(q)
+    setState('init')
+    addTyping(FLOW.init.msg, FLOW.init.quick, 600)
   }
 
   const handleInput = (text) => {
     switch(state) {
-      case 'init':        handleQuick(text); break
+      case 'init': {
+        const lower = text.toLowerCase()
+        if (lower.includes('book') || lower.includes('appointment')) {
+          setState('book_name')
+          addTyping(`I'd be glad to help you book an appointment with Dr. Shiva Singh 🗓️\n\nPlease share your *full name*:`)
+        } else if (lower.includes('contact') || lower.includes('phone') || lower.includes('number')) {
+          setState('contact')
+          addTyping(FLOW.contact.msg, FLOW.contact.quick)
+        } else if (lower.includes('service') || lower.includes('icu') || lower.includes('ventilator')) {
+          setState('services')
+          addTyping(FLOW.services.msg, FLOW.services.quick)
+        } else {
+          addTyping(`Thank you for reaching out! Please choose an option below or let me know how I can assist:`, FLOW.init.quick)
+        }
+        break
+      }
       case 'book_name':   setUd(u=>({...u,name:text}));   setState('book_phone');  addTyping(`Nice to meet you, *${text}*! 😊\n\nPlease share your *phone number*.`); break
       case 'book_phone':  setUd(u=>({...u,phone:text}));  setState('book_reason'); addTyping(`Got it! 📱\n\nWhat is the *reason for your visit*?`); break
       case 'book_reason': setUd(u=>({...u,reason:text})); setState('book_type');   addTyping(`Thank you!\n\nWould you prefer 🏥 *In-Person* or 💻 *Video Call*?`,['🏥 In-Person','💻 Video Call']); break
+      case 'book_type': {
+        const type = text.toLowerCase().includes('video') ? 'Video Call' : 'In-Person'
+        setUd(u=>({...u,type})); setState('book_date')
+        addTyping(`*${type}* selected ✅\n\nPlease share your *preferred date* (e.g., 25 March 2026).`)
+        break
+      }
       case 'book_date': {
-        const final={...ud,date:text}; setState('done')
-        setTimeout(()=>addTyping(`✅ *Appointment Request Received!*\n\n👤 ${final.name}\n📅 ${text}\n🏥 ${final.type||'In-Person'}\n\nDr. Singh's team will confirm on *${final.phone}* within 2 hours. 🙏`,['📞 Call Now','🔙 Main Menu'],1200),600)
+        const aptRecord = {
+          name: ud.name || 'Patient',
+          phone: ud.phone || '',
+          reason: ud.reason || '',
+          type: ud.type || 'In-Person',
+          date: text,
+          time_slot: '10:00 AM',
+          source: 'whatsapp_bot'
+        }
+        setState('done')
+        createAppointment(aptRecord)
+          .then(({ data: res }) => {
+            const idBadge = res.apt_id ? `\nBooking ID: *${res.apt_id}*` : ''
+            addTyping(`✅ *Appointment Request Confirmed!*${idBadge}\n\n👤 ${aptRecord.name}\n📅 ${text}\n🏥 ${aptRecord.type}\n\nDr. Singh's team will confirm details on *${aptRecord.phone}* within 2 hours. 🙏`, ['📞 Call Now', '🔙 Main Menu'], 1000)
+          })
+          .catch(() => {
+            addTyping(`✅ *Appointment Request Received!*\n\n👤 ${aptRecord.name}\n📅 ${text}\n🏥 ${aptRecord.type}\n\nDr. Singh's team will confirm on *${aptRecord.phone}* within 2 hours. 🙏`, ['📞 Call Now', '🔙 Main Menu'], 1000)
+          })
         break
       }
       case 'done': setState('init'); addTyping(FLOW.init.msg,FLOW.init.quick,600); break
@@ -74,7 +116,7 @@ export default function WhatsAppBot() {
         {/* Header */}
         <div className="flex items-center gap-2.5 p-3.5 bg-gradient-to-r from-green-500 to-green-600 flex-shrink-0">
           <div className="w-9 h-9 rounded-full overflow-hidden border-2 border-white/30 flex-shrink-0">
-            <img src="/doctor.jpg" alt="Dr. Singh" className="w-full h-full object-cover object-top"/>
+            <img src={photo} alt="Dr. Singh" className="w-full h-full object-cover object-top"/>
           </div>
           <div className="flex-1">
             <div className="text-white font-semibold text-[0.86rem]">Dr. Shiva Singh</div>

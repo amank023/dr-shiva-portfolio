@@ -10,6 +10,9 @@ app.use('/api/appointments', require('./routes/appointments'));
 app.use('/api/reviews',      require('./routes/reviews'));
 app.use('/api/messages',     require('./routes/messages'));
 app.use('/api/chatlogs',     require('./routes/chatlogs'));
+app.use('/api/content',      require('./routes/content'));
+app.use('/api/auth',         require('./routes/auth'));
+app.use('/api/stats',        require('./routes/stats'));
 
 app.get('/api/health', (req, res) => res.json({ status: 'ok', message: '🏥 API running' }));
 

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Toaster } from 'react-hot-toast'
 import { ThemeProvider } from './context/ThemeContext'
+import { ContentProvider } from './context/ContentContext'
 import Navbar           from './components/Navbar'
 import Hero             from './components/Hero'
 import About            from './components/About'
@@ -14,31 +15,91 @@ import Footer           from './components/Footer'
 import AppointmentModal from './components/AppointmentModal'
 import WhatsAppBot      from './components/WhatsAppBot'
 import Cursor           from './components/Cursor'
+import AdminDashboard   from './admin/AdminDashboard'
+import AdminLogin       from './admin/AdminLogin'
 
 export default function App() {
   const [modalOpen, setModalOpen] = useState(false)
-  useEffect(() => { document.body.style.overflow = modalOpen ? 'hidden' : '' }, [modalOpen])
+  const [isAdminView, setIsAdminView] = useState(() => {
+    return window.location.pathname.startsWith('/admin') || window.location.hash === '#admin'
+  })
+  const [adminToken, setAdminToken] = useState(() => localStorage.getItem('dr_shiva_admin_token') || '')
+
+  useEffect(() => {
+    document.body.style.overflow = modalOpen ? 'hidden' : ''
+  }, [modalOpen])
+
+  useEffect(() => {
+    const handleUrlChange = () => {
+      const isAdm = window.location.pathname.startsWith('/admin') || window.location.hash === '#admin'
+      setIsAdminView(isAdm)
+    }
+    window.addEventListener('popstate', handleUrlChange)
+    window.addEventListener('hashchange', handleUrlChange)
+    return () => {
+      window.removeEventListener('popstate', handleUrlChange)
+      window.removeEventListener('hashchange', handleUrlChange)
+    }
+  }, [])
+
+  useEffect(() => {
+    if (isAdminView) {
+      document.body.classList.remove('custom-cursor')
+    }
+  }, [isAdminView])
+
+  const navigateToAdmin = () => {
+    window.history.pushState({}, '', '/admin')
+    setIsAdminView(true)
+  }
+
+  const navigateToSite = () => {
+    window.history.pushState({}, '', '/')
+    setIsAdminView(false)
+  }
+
+  const handleLogout = () => {
+    localStorage.removeItem('dr_shiva_admin_token')
+    setAdminToken('')
+  }
+
   return (
     <ThemeProvider>
-      <div className="min-h-screen bg-sky-50 dark:bg-gray-950 text-gray-900 dark:text-gray-100 font-body transition-colors duration-300">
-        <Toaster position="top-right" toastOptions={{ className:'font-body text-sm' }}/>
-        <Cursor />
-        <Navbar  onBook={() => setModalOpen(true)} />
-        <Hero    onBook={() => setModalOpen(true)} />
-        <About   onBook={() => setModalOpen(true)} />
-        <Experience onBook={() => setModalOpen(true)} />
-        <Skills />
-        <Achievements />
-        <Reviews />
-        <Education />
-        <Contact onBook={() => setModalOpen(true)} />
-        <Footer />
-        <AppointmentModal open={modalOpen} onClose={() => setModalOpen(false)} />
-        <WhatsAppBot />
-        <button onClick={() => setModalOpen(true)} className="hidden sm:flex fixed bottom-24 right-6 z-40 items-center gap-2 px-4 py-2.5 rounded-full bg-gradient-to-r from-sky-500 to-sky-600 text-white text-xs font-semibold uppercase tracking-widest shadow-lg hover:-translate-y-0.5 transition-all duration-300">
-          📅 Book Appointment
-        </button>
-      </div>
+      <ContentProvider>
+        <Toaster position="top-right" toastOptions={{ className: 'font-body text-sm' }} />
+
+        {isAdminView ? (
+          <div className="admin-scope">
+            {adminToken ? (
+              <AdminDashboard
+                onLogout={handleLogout}
+                onBackToSite={navigateToSite}
+              />
+            ) : (
+              <AdminLogin
+                onLoginSuccess={(token) => setAdminToken(token)}
+                onBackToSite={navigateToSite}
+              />
+            )}
+          </div>
+        ) : (
+          <div className="min-h-screen bg-sky-50 dark:bg-gray-950 text-gray-900 dark:text-gray-100 font-body transition-colors duration-300">
+            <Cursor />
+            <Navbar onBook={() => setModalOpen(true)} onOpenAdmin={navigateToAdmin} />
+            <Hero onBook={() => setModalOpen(true)} />
+            <About onBook={() => setModalOpen(true)} />
+            <Experience onBook={() => setModalOpen(true)} />
+            <Skills />
+            <Achievements />
+            <Reviews />
+            <Education />
+            <Contact onBook={() => setModalOpen(true)} />
+            <Footer onOpenAdmin={navigateToAdmin} />
+            <AppointmentModal open={modalOpen} onClose={() => setModalOpen(false)} />
+            <WhatsAppBot />
+          </div>
+        )}
+      </ContentProvider>
     </ThemeProvider>
   )
 }

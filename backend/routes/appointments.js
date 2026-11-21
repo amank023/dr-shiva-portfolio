@@ -20,4 +20,33 @@ router.post('/', (req, res) => {
   } catch(e) { res.status(500).json({ error: e.message }); }
 });
 
+router.patch('/:id', (req, res) => {
+  try {
+    const id = parseInt(req.params.id);
+    const existing = db.get('appointments').find({ id }).value();
+    if (!existing) return res.status(404).json({ error: 'Appointment not found' });
+    
+    const allowed = ['status', 'notes', 'date', 'alt_date', 'time_slot', 'name', 'phone', 'type', 'reason', 'age', 'gender'];
+    const updates = {};
+    for (const key of allowed) {
+      if (req.body[key] !== undefined) updates[key] = req.body[key];
+    }
+    updates.updated_at = new Date().toISOString();
+
+    db.get('appointments').find({ id }).assign(updates).write();
+    res.json({ message: 'Appointment updated successfully', appointment: db.get('appointments').find({ id }).value() });
+  } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+router.delete('/:id', (req, res) => {
+  try {
+    const id = parseInt(req.params.id);
+    const existing = db.get('appointments').find({ id }).value();
+    if (!existing) return res.status(404).json({ error: 'Appointment not found' });
+
+    db.get('appointments').remove({ id }).write();
+    res.json({ message: 'Appointment deleted successfully' });
+  } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
 module.exports = router;

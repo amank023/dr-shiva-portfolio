@@ -1,22 +1,28 @@
 import { useState, useEffect } from 'react'
-import { createAppointment } from '../hooks/api'
+import { createAppointment, getAppointments } from '../hooks/api'
 import toast from 'react-hot-toast'
 
 const SLOTS = ['09:00 AM','09:30 AM','10:00 AM','10:30 AM','11:00 AM','11:30 AM','02:00 PM','02:30 PM','03:00 PM','04:00 PM','04:30 PM','05:00 PM']
-const TAKEN = ['10:00 AM','11:00 AM','03:00 PM']
 
 export default function AppointmentModal({ open, onClose }) {
   const [step, setStep]   = useState(1)
   const [aptId, setAptId] = useState('')
   const [busy, setBusy]   = useState(false)
+  const [appointments, setAppointments] = useState([])
   const [data, setData]   = useState({ name:'', phone:'', age:'', gender:'', reason:'', type:'In-Person', date:'', alt_date:'', time_slot:'' })
   const set = k => e => setData(d => ({ ...d, [k]: e.target.value }))
 
   useEffect(() => {
-    if (!open) setTimeout(() => {
-      setStep(1); setAptId('')
-      setData({ name:'', phone:'', age:'', gender:'', reason:'', type:'In-Person', date:'', alt_date:'', time_slot:'' })
-    }, 350)
+    if (open) {
+      getAppointments()
+        .then(({ data: list }) => setAppointments(Array.isArray(list) ? list : []))
+        .catch(() => {})
+    } else {
+      setTimeout(() => {
+        setStep(1); setAptId('')
+        setData({ name:'', phone:'', age:'', gender:'', reason:'', type:'In-Person', date:'', alt_date:'', time_slot:'' })
+      }, 350)
+    }
   }, [open])
 
   const next2 = () => {
@@ -33,14 +39,16 @@ export default function AppointmentModal({ open, onClose }) {
     try {
       const { data: res } = await createAppointment(data)
       setAptId(res.apt_id)
-      setStep(5)
+      setStep(4)
       toast.success('Appointment confirmed! 🎉')
+      getAppointments().then(({ data: list }) => setAppointments(Array.isArray(list) ? list : [])).catch(() => {})
     } catch { toast.error('Booking failed. Please try again.') }
     finally { setBusy(false) }
   }
 
   const today  = new Date().toISOString().split('T')[0]
   const dateStr = data.date ? new Date(data.date).toLocaleDateString('en-IN', { weekday:'long', year:'numeric', month:'long', day:'numeric' }) : ''
+  const takenSlots = appointments.filter(a => a.date === data.date).map(a => a.time_slot)
   const ic = 'w-full bg-sky-50/50 dark:bg-white/5 border-[1.5px] border-sky-100 dark:border-white/10 rounded-xl px-3.5 py-2.5 text-gray-800 dark:text-gray-200 text-[0.82rem] outline-none focus:border-sky-400 transition-all placeholder:text-gray-300 dark:placeholder:text-gray-600'
 
   if (!open) return null
@@ -59,7 +67,7 @@ export default function AppointmentModal({ open, onClose }) {
         </div>
 
         {/* Progress */}
-        {step < 5 && (
+        {step < 4 && (
           <>
             <div className="flex gap-1.5 mb-1">
               {[1,2,3].map(s => (
@@ -112,7 +120,7 @@ export default function AppointmentModal({ open, onClose }) {
             <label className="block text-[9px] text-gray-400 uppercase tracking-[0.15em] mb-2">⏰ Available Slots</label>
             <div className="grid grid-cols-3 gap-2 mb-3">
               {SLOTS.map(s => {
-                const taken = TAKEN.includes(s)
+                const taken = takenSlots.includes(s)
                 return (
                   <div key={s} onClick={() => !taken && setData(d=>({...d,time_slot:s}))}
                     className={`py-2 rounded-xl border-[1.5px] text-center text-[0.74rem] font-medium transition-all
@@ -159,8 +167,8 @@ export default function AppointmentModal({ open, onClose }) {
           </>
         )}
 
-        {/* ── Step 5: Success ── */}
-        {step === 5 && (
+        {/* ── Step 4: Success ── */}
+        {step === 4 && (
           <div className="text-center py-4">
             <div className="text-6xl mb-4">🎉</div>
             <h3 className="font-display font-bold text-gray-900 dark:text-white text-2xl mb-2">Appointment Confirmed!</h3>

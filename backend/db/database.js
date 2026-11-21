@@ -1,7 +1,8 @@
-const low      = require('lowdb');
-const FileSync = require('lowdb/adapters/FileSync');
-const path     = require('path');
-const fs       = require('fs');
+const low            = require('lowdb');
+const FileSync       = require('lowdb/adapters/FileSync');
+const path           = require('path');
+const fs             = require('fs');
+const defaultContent = require('./defaultContent');
 
 const dbDir = __dirname;
 if (!fs.existsSync(dbDir)) fs.mkdirSync(dbDir, { recursive: true });
@@ -9,7 +10,22 @@ if (!fs.existsSync(dbDir)) fs.mkdirSync(dbDir, { recursive: true });
 const adapter = new FileSync(path.join(dbDir, 'portfolio.json'));
 const db      = low(adapter);
 
-db.defaults({ appointments:[], reviews:[], messages:[], chat_logs:[] }).write();
+db.defaults({
+  appointments: [],
+  reviews: [],
+  messages: [],
+  chat_logs: [],
+  content: defaultContent,
+  admin_settings: { password: process.env.ADMIN_PASSWORD || 'admin123' }
+}).write();
+
+// Ensure content has all sections if portfolio.json existed previously without them
+if (!db.get('content').value()) {
+  db.set('content', defaultContent).write();
+}
+if (!db.get('admin_settings').value()) {
+  db.set('admin_settings', { password: process.env.ADMIN_PASSWORD || 'admin123' }).write();
+}
 
 // Seed reviews if empty
 if (db.get('reviews').size().value() === 0) {
@@ -24,8 +40,9 @@ if (db.get('reviews').size().value() === 0) {
 }
 
 function nextId(col) {
-  const items = db.get(col).value();
-  return items.length === 0 ? 1 : Math.max(...items.map(i => i.id)) + 1;
+  const items = db.get(col).value() || [];
+  const validIds = items.map(i => Number(i.id)).filter(n => !isNaN(n));
+  return validIds.length === 0 ? 1 : Math.max(...validIds) + 1;
 }
 
 console.log('✅ Database ready →', path.join(dbDir, 'portfolio.json'));

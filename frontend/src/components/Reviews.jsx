@@ -46,7 +46,7 @@ export default function Reviews() {
               {[5,4,3,2,1].map(n=>(
                 <div key={n} className="flex items-center gap-2 text-[0.74rem] text-gray-400">
                   <span className="text-amber-400">★</span><span>{n}</span>
-                  <div className="flex-1 h-1.5 bg-sky-100 dark:bg-sky-900/30 rounded-full overflow-hidden"><div className="rb-fill h-full bg-gradient-to-r from-amber-400 to-amber-300 rounded-full transition-all duration-1000" data-p={Math.round(dist[n-1]/maxD*100)} style={{width:0}}/></div>
+                  <div className="flex-1 h-1.5 bg-sky-100 dark:bg-sky-900/30 rounded-full overflow-hidden"><div className="rb-fill h-full bg-gradient-to-r from-amber-400 to-amber-300 rounded-full transition-all duration-1000" style={{width: `${Math.round(dist[n-1]/maxD*100)}%`}}/></div>
                   <span className="min-w-[16px] text-right">{dist[n-1]}</span>
                 </div>
               ))}

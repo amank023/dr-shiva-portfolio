@@ -21,4 +21,34 @@ router.post('/', (req, res) => {
   } catch(e) { res.status(500).json({ error: e.message }); }
 });
 
+router.patch('/:id', (req, res) => {
+  try {
+    const id = parseInt(req.params.id);
+    const existing = db.get('reviews').find({ id }).value();
+    if (!existing) return res.status(404).json({ error: 'Review not found' });
+
+    const allowed = ['name', 'relation', 'rating', 'text', 'verified', 'color'];
+    const updates = {};
+    for (const key of allowed) {
+      if (req.body[key] !== undefined) {
+        updates[key] = key === 'rating' ? parseInt(req.body[key]) : req.body[key];
+      }
+    }
+
+    db.get('reviews').find({ id }).assign(updates).write();
+    res.json({ message: 'Review updated successfully', review: db.get('reviews').find({ id }).value() });
+  } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
+router.delete('/:id', (req, res) => {
+  try {
+    const id = parseInt(req.params.id);
+    const existing = db.get('reviews').find({ id }).value();
+    if (!existing) return res.status(404).json({ error: 'Review not found' });
+
+    db.get('reviews').remove({ id }).write();
+    res.json({ message: 'Review deleted successfully' });
+  } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
 module.exports = router;
