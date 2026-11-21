@@ -15,7 +15,7 @@ router.get('/', (req, res) => {
     const cancelledApts = appointments.filter(a => a.status === 'cancelled').length;
 
     const unreadMessages = messages.filter(m => !m.read).length;
-    const avgRating      = reviews.length ? (reviews.reduce((sum, r) => sum + (r.rating || 0), 0) / reviews.length).toFixed(1) : '5.0';
+    const avgRating      = reviews.length ? (reviews.reduce((sum, r) => sum + (Number(r.rating) || 0), 0) / reviews.length).toFixed(1) : '5.0';
 
     const recentAppointments = db.get('appointments').sortBy('created_at').reverse().take(5).value();
     const recentMessages     = db.get('messages').sortBy('created_at').reverse().take(5).value();

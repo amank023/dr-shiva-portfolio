@@ -128,7 +128,8 @@ export default function ReviewsTab() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {filtered.map((r) => {
-            const ini = (r.name || 'P').split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()
+            const safeName = r.name || 'Patient'
+            const ini = safeName.trim().split(/\s+/).map(w => w[0]).filter(Boolean).join('').slice(0, 2).toUpperCase() || 'P'
             return (
               <div
                 key={r.id}

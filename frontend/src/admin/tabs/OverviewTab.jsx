@@ -260,7 +260,7 @@ export default function OverviewTab({ stats, onNavigateTab }) {
                       {r.name} <span className="text-[10px] text-gray-400 font-normal">({r.relation})</span>
                     </div>
                     <div className="text-amber-400 font-bold tracking-tighter">
-                      {'★'.repeat(r.rating || 5)}
+                      {'★'.repeat(Math.max(1, Math.min(5, Math.round(Number(r.rating) || 5))))}
                     </div>
                   </div>
                   <p className="text-gray-500 dark:text-gray-400 italic text-[11px] line-clamp-2">"{r.text}"</p>
