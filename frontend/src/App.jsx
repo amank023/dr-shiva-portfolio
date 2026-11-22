@@ -27,7 +27,12 @@ export default function App() {
 
   useEffect(() => {
     document.body.style.overflow = modalOpen ? 'hidden' : ''
-  }, [modalOpen])
+    if (modalOpen) {
+      document.body.classList.remove('custom-cursor')
+    } else if (!isAdminView && window.innerWidth > 768) {
+      document.body.classList.add('custom-cursor')
+    }
+  }, [modalOpen, isAdminView])
 
   useEffect(() => {
     const handleUrlChange = () => {

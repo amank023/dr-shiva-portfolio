@@ -12,10 +12,11 @@ body.custom-cursor input, body.custom-cursor textarea { cursor: text; }
 body.custom-cursor select, body.custom-cursor button, body.custom-cursor [role="button"], body.custom-cursor a { cursor: pointer; }
 @media (max-width: 768px) { body.custom-cursor { cursor: auto; } }
 
-/* Admin dashboard normal cursor guarantees */
-.admin-scope, .admin-scope * { cursor: auto !important; }
-.admin-scope a, .admin-scope button, .admin-scope select, .admin-scope [role="button"] { cursor: pointer !important; }
-.admin-scope input, .admin-scope textarea { cursor: text !important; }
+/* Admin dashboard & modal normal cursor guarantees */
+.admin-scope, .admin-scope *, .modal-scope, .modal-scope * { cursor: auto !important; }
+.admin-scope a, .admin-scope button, .admin-scope select, .admin-scope [role="button"],
+.modal-scope a, .modal-scope button, .modal-scope select, .modal-scope [role="button"] { cursor: pointer !important; }
+.admin-scope input, .admin-scope textarea, .modal-scope input, .modal-scope textarea { cursor: text !important; }
 a { text-decoration: none; color: inherit; }
 ::-webkit-scrollbar { width: 3px; }
 ::-webkit-scrollbar-thumb { background: #2e75b6; border-radius: 2px; }
