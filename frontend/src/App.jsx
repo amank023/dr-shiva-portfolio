@@ -10,7 +10,6 @@ import Skills           from './components/Skills'
 import Achievements     from './components/Achievements'
 import Reviews          from './components/Reviews'
 import Education        from './components/Education'
-import Contact          from './components/Contact'
 import Footer           from './components/Footer'
 import AppointmentModal from './components/AppointmentModal'
 import WhatsAppBot      from './components/WhatsAppBot'
@@ -98,7 +97,6 @@ export default function App() {
             <Achievements />
             <Reviews />
             <Education />
-            <Contact onBook={() => setModalOpen(true)} />
             <Footer onOpenAdmin={navigateToAdmin} />
             <AppointmentModal open={modalOpen} onClose={() => setModalOpen(false)} />
             <WhatsAppBot />

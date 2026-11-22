@@ -57,7 +57,6 @@ export default function Hero({ onBook }) {
           </div>
           <div className="flex flex-wrap gap-3">
             <button onClick={onBook} className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-sky-500 to-sky-600 text-white text-[0.82rem] font-semibold uppercase tracking-wide hover:opacity-90 hover:-translate-y-0.5 transition-all shadow-lg shadow-sky-300/30">📅 Book Appointment</button>
-            <a href="#contact" className="inline-flex items-center gap-2 px-5 py-3 rounded-xl border-[1.5px] border-sky-400/50 text-sky-500 text-[0.82rem] font-medium uppercase tracking-wide hover:bg-sky-50 dark:hover:bg-sky-900/20 transition-all">✉ Get in Touch</a>
             <a href={`https://wa.me/${rawPhone}`} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 px-5 py-3 rounded-xl border-[1.5px] border-green-400/40 text-green-500 text-[0.82rem] font-medium bg-green-50/50 dark:bg-green-900/10 hover:bg-green-50 transition-all">💬 WhatsApp</a>
           </div>
         </div>

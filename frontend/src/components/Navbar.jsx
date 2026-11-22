@@ -3,7 +3,7 @@ import { useTheme } from '../context/ThemeContext'
 import { usePortfolioContent } from '../context/ContentContext'
 import { Moon, Sun, Menu, X, Shield } from 'lucide-react'
 
-const links = ['about','experience','competencies','reviews','education','contact']
+const links = ['about','experience','competencies','reviews','education']
 
 export default function Navbar({ onBook, onOpenAdmin }) {
   const { dark, toggleTheme } = useTheme()

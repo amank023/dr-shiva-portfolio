@@ -5,8 +5,7 @@ const links = [
   { href: '#experience', label: 'Experience' },
   { href: '#competencies', label: 'Skills' },
   { href: '#reviews', label: 'Reviews' },
-  { href: '#education', label: 'Education' },
-  { href: '#contact', label: 'Contact' }
+  { href: '#education', label: 'Education' }
 ]
 
 export default function Footer({ onOpenAdmin }) {

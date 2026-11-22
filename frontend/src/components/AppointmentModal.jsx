@@ -231,7 +231,7 @@ export default function AppointmentModal({ open, onClose }) {
               </button>
             </div>
 
-            {/* Google Meet Interactive Card */}
+            {/* Google Meet Info Banner if Video Call */}
             {data.type === 'Video Call' && (
               <div className="mb-4 p-4 rounded-2xl bg-gradient-to-br from-emerald-50 via-teal-50/70 to-sky-50/60 dark:from-emerald-950/30 dark:via-teal-950/20 dark:to-sky-950/20 border-2 border-emerald-300 dark:border-emerald-700 shadow-sm space-y-3">
                 <div className="flex items-center gap-2.5">
@@ -247,34 +247,11 @@ export default function AppointmentModal({ open, onClose }) {
                         Google Meet Video Consultation
                       </h4>
                       <span className="px-2 py-0.5 rounded-full text-[8.5px] font-bold tracking-wider uppercase bg-emerald-100 text-emerald-800 dark:bg-emerald-900/50 dark:text-emerald-200">
-                        Ready
+                        Selected
                       </span>
                     </div>
                     <p className="text-[10.5px] text-gray-500 dark:text-gray-400 leading-tight">Private 1-on-1 virtual consult with Dr. Shiva Singh</p>
                   </div>
-                </div>
-
-                {/* Direct Action Buttons */}
-                <div className="space-y-2 pt-1">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const link = meetLink || 'https://meet.google.com/shv-care-meet'
-                      window.open(link, '_blank', 'noopener,noreferrer')
-                      toast.success('Opening Google Meet video call! 📹')
-                    }}
-                    className="w-full py-2.5 px-3 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white font-semibold text-xs flex items-center justify-center gap-2 shadow-md shadow-emerald-500/20 active:scale-[0.99] transition-all cursor-pointer"
-                  >
-                    <span>📹</span> Open Google Meet Call Now ↗
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={next2}
-                    className="w-full py-2 px-3 rounded-xl border border-emerald-300 dark:border-emerald-700 bg-white dark:bg-gray-800 text-emerald-700 dark:text-emerald-300 font-semibold text-[11px] flex items-center justify-center gap-1.5 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 transition-colors cursor-pointer"
-                  >
-                    <span>📅</span> Or Continue Scheduling Video Slot →
-                  </button>
                 </div>
 
                 <div className="grid grid-cols-2 gap-1.5 text-[10px] text-gray-600 dark:text-gray-300 pt-2 border-t border-emerald-200/60 dark:border-emerald-800/40">
@@ -299,7 +276,7 @@ export default function AppointmentModal({ open, onClose }) {
               onClick={next2}
               className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-gradient-to-r from-sky-500 to-sky-600 hover:from-sky-600 hover:to-sky-700 text-white text-[0.82rem] font-semibold uppercase tracking-wide hover:opacity-90 shadow-md shadow-sky-400/20 active:scale-[0.99] transition-all cursor-pointer"
             >
-              Next Step: Select Schedule →
+              {data.type === 'Video Call' ? 'Continue to Schedule Video Slot →' : 'Next Step: Select Schedule →'}
             </button>
           </>
         )}
