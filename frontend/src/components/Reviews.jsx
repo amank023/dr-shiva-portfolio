@@ -108,7 +108,7 @@ export default function Reviews() {
             <div className="w-10 h-0.5 bg-sky-500 rounded mt-3" />
           </div>
 
-          <div className="flex items-center gap-5 bg-white dark:bg-white/5 border border-sky-100 dark:border-white/10 rounded-2xl px-6 py-4 shadow-sm flex-wrap gap-y-3">
+          <div className="w-full sm:w-auto flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-5 bg-white dark:bg-white/5 border border-sky-100 dark:border-white/10 rounded-2xl px-6 py-4 shadow-sm">
             <div className="text-center">
               <div className="font-display font-bold text-sky-500 text-5xl leading-none">{avg.toFixed(1)}</div>
               <div className="mt-1 flex justify-center">
@@ -119,9 +119,10 @@ export default function Reviews() {
               </div>
             </div>
 
-            <div className="w-px h-14 bg-sky-100 dark:bg-white/10 flex-shrink-0" />
+            <div className="hidden sm:block w-px h-14 bg-sky-100 dark:bg-white/10 flex-shrink-0" />
+            <div className="w-full h-px bg-sky-100 dark:bg-white/10 sm:hidden" />
 
-            <div className="flex flex-col gap-1 min-w-[130px]">
+            <div className="flex flex-col gap-1 w-full sm:w-auto min-w-[130px]">
               {[5, 4, 3, 2, 1].map(n => (
                 <div key={n} className="flex items-center gap-2 text-[0.74rem] text-gray-400">
                   <span className="text-amber-400">★</span>

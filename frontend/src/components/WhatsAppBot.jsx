@@ -111,9 +111,9 @@ export default function WhatsAppBot() {
   const fmt  = (t) => t.replace(/\*(.*?)\*/g,'<strong>$1</strong>').replace(/\n/g,'<br/>')
 
   return (
-    <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end gap-3">
+    <div className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-50 flex flex-col items-end gap-3">
       {/* Chat window */}
-      <div className={`w-[310px] bg-white dark:bg-gray-900 border border-gray-200 dark:border-white/10 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[490px] transition-all duration-300 origin-bottom-right ${open?'opacity-100 scale-100 pointer-events-auto':'opacity-0 scale-95 pointer-events-none'}`}>
+      <div className={`w-[calc(100vw-2rem)] sm:w-[320px] max-w-[340px] bg-white dark:bg-gray-900 border border-gray-200 dark:border-white/10 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[490px] transition-all duration-300 origin-bottom-right ${open?'opacity-100 scale-100 pointer-events-auto':'opacity-0 scale-95 pointer-events-none'}`}>
         {/* Header */}
         <div className="flex items-center gap-2.5 p-3.5 bg-gradient-to-r from-green-500 to-green-600 flex-shrink-0">
           <div className="w-9 h-9 rounded-full overflow-hidden border-2 border-white/30 flex-shrink-0">

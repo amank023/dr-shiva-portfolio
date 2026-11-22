@@ -74,8 +74,8 @@ export default function AppointmentModal({ open, onClose }) {
   if (!open) return null
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-md modal-scope" onClick={e => e.target === e.currentTarget && onClose()}>
-      <div className="bg-white dark:bg-gray-900 border border-sky-200 dark:border-sky-800 rounded-2xl p-7 w-full max-w-md max-h-[92vh] overflow-y-auto shadow-2xl modal-scope relative z-[101]" onClick={e => e.stopPropagation()} style={{ animation:'fadeUp 0.35s ease both' }}>
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-md modal-scope" onClick={e => e.target === e.currentTarget && onClose()}>
+      <div className="bg-white dark:bg-gray-900 border border-sky-200 dark:border-sky-800 rounded-2xl p-5 sm:p-7 w-full max-w-md max-h-[92vh] overflow-y-auto shadow-2xl modal-scope relative z-[101]" onClick={e => e.stopPropagation()} style={{ animation:'fadeUp 0.35s ease both' }}>
 
         {/* Header */}
         <div className="flex items-start justify-between mb-4">
@@ -136,44 +136,48 @@ export default function AppointmentModal({ open, onClose }) {
         {/* ── Step 1: Patient Details ── */}
         {step === 1 && (
           <>
-            <div className="grid grid-cols-2 gap-3 mb-3">
-              <div>
-                <label className="block text-[9px] text-gray-400 uppercase tracking-[0.15em] mb-1.5 font-medium">
-                  Full Name *
-                </label>
-                <input
-                  value={data.name}
-                  onChange={set('name')}
-                  placeholder="Patient name"
-                  className={`${ic} ${errors.name ? 'border-rose-500 bg-rose-50/20 dark:bg-rose-950/20' : ''}`}
-                />
-                {errors.name && <p className="text-[10px] text-rose-500 mt-1 font-medium">{errors.name}</p>}
+            <div className="space-y-3 mb-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-[9px] text-gray-400 uppercase tracking-[0.15em] mb-1.5 font-medium">
+                    Full Name *
+                  </label>
+                  <input
+                    value={data.name}
+                    onChange={set('name')}
+                    placeholder="Patient name"
+                    className={`${ic} ${errors.name ? 'border-rose-500 bg-rose-50/20 dark:bg-rose-950/20' : ''}`}
+                  />
+                  {errors.name && <p className="text-[10px] text-rose-500 mt-1 font-medium">{errors.name}</p>}
+                </div>
+
+                <div>
+                  <label className="block text-[9px] text-gray-400 uppercase tracking-[0.15em] mb-1.5 font-medium">
+                    Phone *
+                  </label>
+                  <input
+                    value={data.phone}
+                    onChange={set('phone')}
+                    placeholder="+91-XXXXXXXXXX"
+                    type="tel"
+                    className={`${ic} ${errors.phone ? 'border-rose-500 bg-rose-50/20 dark:bg-rose-950/20' : ''}`}
+                  />
+                  {errors.phone && <p className="text-[10px] text-rose-500 mt-1 font-medium">{errors.phone}</p>}
+                </div>
               </div>
 
-              <div>
-                <label className="block text-[9px] text-gray-400 uppercase tracking-[0.15em] mb-1.5 font-medium">
-                  Phone *
-                </label>
-                <input
-                  value={data.phone}
-                  onChange={set('phone')}
-                  placeholder="+91-XXXXXXXXXX"
-                  type="tel"
-                  className={`${ic} ${errors.phone ? 'border-rose-500 bg-rose-50/20 dark:bg-rose-950/20' : ''}`}
-                />
-                {errors.phone && <p className="text-[10px] text-rose-500 mt-1 font-medium">{errors.phone}</p>}
-              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-[9px] text-gray-400 uppercase tracking-[0.15em] mb-1.5 font-medium">Age</label>
+                  <input value={data.age} onChange={set('age')} placeholder="Age" type="number" className={ic}/>
+                </div>
 
-              <div>
-                <label className="block text-[9px] text-gray-400 uppercase tracking-[0.15em] mb-1.5 font-medium">Age</label>
-                <input value={data.age} onChange={set('age')} placeholder="Age" type="number" className={ic}/>
-              </div>
-
-              <div>
-                <label className="block text-[9px] text-gray-400 uppercase tracking-[0.15em] mb-1.5 font-medium">Gender</label>
-                <select value={data.gender} onChange={set('gender')} className={ic}>
-                  <option value="">Select</option><option>Male</option><option>Female</option><option>Other</option>
-                </select>
+                <div>
+                  <label className="block text-[9px] text-gray-400 uppercase tracking-[0.15em] mb-1.5 font-medium">Gender</label>
+                  <select value={data.gender} onChange={set('gender')} className={ic}>
+                    <option value="">Select</option><option>Male</option><option>Female</option><option>Other</option>
+                  </select>
+                </div>
               </div>
             </div>
 
@@ -290,7 +294,7 @@ export default function AppointmentModal({ open, onClose }) {
                 <span><strong>Google Meet Slot:</strong> Your video link will be active 5 minutes prior to the chosen time.</span>
               </div>
             )}
-            <div className="grid grid-cols-2 gap-3 mb-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
               <div><label className="block text-[9px] text-gray-400 uppercase tracking-[0.15em] mb-1.5">Preferred Date *</label><input type="date" value={data.date} onChange={set('date')} min={today} className={ic}/></div>
               <div><label className="block text-[9px] text-gray-400 uppercase tracking-[0.15em] mb-1.5">Alternate Date</label><input type="date" value={data.alt_date} onChange={set('alt_date')} min={today} className={ic}/></div>
             </div>

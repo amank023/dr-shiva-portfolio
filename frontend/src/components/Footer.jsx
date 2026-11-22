@@ -14,7 +14,7 @@ export default function Footer({ onOpenAdmin }) {
 
   return (
     <footer className="bg-sky-100 dark:bg-gray-900 border-t border-sky-200 dark:border-white/10 transition-colors duration-300">
-      <div className="max-w-6xl mx-auto px-[5%] py-5 flex flex-wrap items-center justify-between gap-4">
+      <div className="max-w-6xl mx-auto px-[5%] py-6 flex flex-col md:flex-row items-center justify-between gap-4 text-center md:text-left">
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 rounded-full overflow-hidden border-2 border-sky-500">
             <img src={p.photo || '/doctor.jpg'} alt="Dr. Singh" className="w-full h-full object-cover object-top" />
@@ -29,7 +29,7 @@ export default function Footer({ onOpenAdmin }) {
           </div>
         </div>
 
-        <div className="flex flex-wrap items-center gap-4">
+        <div className="flex flex-wrap items-center justify-center md:justify-start gap-x-5 gap-y-2">
           {links.map((l) => (
             <a
               key={l.href}

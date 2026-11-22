@@ -20,8 +20,8 @@ export default function Education() {
         <div className="w-10 h-0.5 bg-sky-500 rounded mb-12"/>
         <div className="flex flex-col gap-3 max-w-4xl">
           {eduList.map((e, idx)=>(
-            <div key={e.id || e.year || idx} className="flex gap-4 items-start bg-sky-50 dark:bg-white/5 border border-sky-100 dark:border-white/10 border-l-[3px] border-l-sky-600 rounded-2xl p-5 hover:border-l-sky-400 hover:shadow-md hover:bg-white dark:hover:bg-white/8 transition-all duration-300 cursor-default">
-              <div className="w-14 h-14 rounded-xl bg-sky-100 dark:bg-sky-900/30 border border-sky-200 dark:border-sky-800 flex flex-col items-center justify-center flex-shrink-0">
+            <div key={e.id || e.year || idx} className="flex gap-3.5 sm:gap-4 items-start bg-sky-50 dark:bg-white/5 border border-sky-100 dark:border-white/10 border-l-[3px] border-l-sky-600 rounded-2xl p-4 sm:p-5 hover:border-l-sky-400 hover:shadow-md hover:bg-white dark:hover:bg-white/8 transition-all duration-300 cursor-default">
+              <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl bg-sky-100 dark:bg-sky-900/30 border border-sky-200 dark:border-sky-800 flex flex-col items-center justify-center flex-shrink-0">
                 <div className="text-sm">{e.icon || '🎓'}</div>
                 <div className="text-[11px] font-bold text-gray-700 dark:text-gray-300">{e.year}</div>
               </div>

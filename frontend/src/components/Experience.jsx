@@ -31,7 +31,7 @@ export default function Experience({ onBook }) {
                   <div className="text-gray-800 dark:text-gray-200 font-semibold text-[0.93rem] mb-1">{e.role}</div>
                   <div className="text-sky-500 text-[0.82rem] font-medium mb-2 flex items-center gap-1 flex-wrap">🏥 {e.org}<span className="text-gray-400 text-[0.75rem]">· {e.loc}</span></div>
                   <span className="inline-block px-2.5 py-0.5 rounded-lg bg-sky-50 dark:bg-sky-900/30 border border-sky-100 dark:border-sky-800 text-gray-400 text-[9px] uppercase tracking-wide">{e.badge}</span>
-                  <div className={`overflow-hidden transition-all duration-400 ${active===i?'max-h-48 opacity-100 mt-3':'max-h-0 opacity-0'}`}>
+                  <div className={`overflow-hidden transition-all duration-400 ${active===i?'max-h-96 opacity-100 mt-3':'max-h-0 opacity-0'}`}>
                     <ul className="border-t border-sky-100 dark:border-white/10 pt-3 space-y-1.5">
                       {(e.points || []).map((pt,j)=><li key={j} className="flex gap-2 text-gray-500 dark:text-gray-400 text-[0.79rem] font-light"><span className="text-sky-500 flex-shrink-0">▸</span>{pt}</li>)}
                     </ul>
@@ -40,7 +40,7 @@ export default function Experience({ onBook }) {
               </div>
             ))}
           </div>
-          <div className="hidden lg:block">
+          <div className="mt-8 lg:mt-0">
             <div className="sticky top-24 bg-white dark:bg-white/5 border border-sky-100 dark:border-white/10 rounded-2xl p-6 shadow-sm">
               <p className="text-[9.5px] uppercase tracking-[0.17em] text-sky-500 font-semibold mb-4">🩺 Professional Focus</p>
               {[

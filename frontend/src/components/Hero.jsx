@@ -55,9 +55,9 @@ export default function Hero({ onBook }) {
               </div>
             ))}
           </div>
-          <div className="flex flex-wrap gap-3">
-            <button onClick={onBook} className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-sky-500 to-sky-600 text-white text-[0.82rem] font-semibold uppercase tracking-wide hover:opacity-90 hover:-translate-y-0.5 transition-all shadow-lg shadow-sky-300/30">📅 Book Appointment</button>
-            <a href={`https://wa.me/${rawPhone}`} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 px-5 py-3 rounded-xl border-[1.5px] border-green-400/40 text-green-500 text-[0.82rem] font-medium bg-green-50/50 dark:bg-green-900/10 hover:bg-green-50 transition-all">💬 WhatsApp</a>
+          <div className="flex flex-col sm:flex-row gap-3">
+            <button onClick={onBook} className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-sky-500 to-sky-600 text-white text-[0.82rem] font-semibold uppercase tracking-wide hover:opacity-90 hover:-translate-y-0.5 transition-all shadow-lg shadow-sky-300/30">📅 Book Appointment</button>
+            <a href={`https://wa.me/${rawPhone}`} target="_blank" rel="noreferrer" className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl border-[1.5px] border-green-400/40 text-green-500 text-[0.82rem] font-medium bg-green-50/50 dark:bg-green-900/10 hover:bg-green-50 transition-all">💬 WhatsApp</a>
           </div>
         </div>
         {/* RIGHT PHOTO */}
@@ -78,11 +78,16 @@ export default function Hero({ onBook }) {
         </div>
       </div>
       {/* STATS BAR */}
-      <div className="relative z-10 bg-white/80 dark:bg-black/30 backdrop-blur-sm border-t border-sky-100 dark:border-white/10 flex flex-wrap">
+      <div className="relative z-10 bg-white/80 dark:bg-black/30 backdrop-blur-sm border-t border-sky-100 dark:border-white/10 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5">
         {stats.map((s,i)=>(
-          <div key={i} className="flex-1 min-w-[80px] py-4 text-center border-r border-sky-100 dark:border-white/10 last:border-r-0">
+          <div
+            key={i}
+            className={`py-4 px-3 text-center border-b sm:border-b-0 border-r border-sky-100 dark:border-white/10 last:border-r-0 ${
+              i === stats.length - 1 && stats.length % 2 !== 0 ? 'col-span-2 sm:col-span-1' : ''
+            }`}
+          >
             <div className="shimmer-text font-display font-bold text-[1.9rem] leading-none mb-1">{s.num}</div>
-            <div className="text-[8.5px] text-gray-400 uppercase tracking-[0.13em] font-medium">{s.label}</div>
+            <div className="text-[8.5px] text-gray-400 uppercase tracking-[0.13em] font-medium leading-tight">{s.label}</div>
           </div>
         ))}
       </div>
