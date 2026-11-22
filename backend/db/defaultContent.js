@@ -10,6 +10,7 @@ module.exports = {
     email: "askdrshivasingh@gmail.com",
     location: "Lucknow, Uttar Pradesh",
     address: "Sahara City Homes, IIM Road",
+    googleMeetLink: "https://meet.google.com/shv-care-meet",
     heroBio: "Physician with over 7 years of experience in critical care and internal medicine. Proficient in management of mechanically ventilated patients, haemodynamic monitoring, and advanced bedside procedures across tertiary care institutions in Lucknow.",
     aboutBio: "Physician with over 7 years of experience in critical care and internal medicine, trained across tertiary care institutions in Lucknow. Proficient in management of mechanically ventilated patients, haemodynamic monitoring, and advanced bedside procedures. Disciplined approach to clinical decision-making, patient safety, and documentation. Contributed actively to NABH accreditation processes.",
     hours: "Mon–Sat · 9:00 AM – 12:00 PM & 4:00 PM – 7:00 PM (Sunday: By appointment only)",

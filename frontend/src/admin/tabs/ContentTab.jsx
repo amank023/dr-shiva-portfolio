@@ -467,6 +467,21 @@ export default function ContentTab({ onContentUpdated }) {
             </div>
 
             <div>
+              <label className="block text-gray-400 text-xs mb-1 font-medium">
+                📹 Doctor Google Meet Room Link (Optional — Used as default for Video Consultations)
+              </label>
+              <input
+                value={profile.googleMeetLink || ''}
+                onChange={e => updateProfile('googleMeetLink', e.target.value)}
+                placeholder="https://meet.google.com/shv-care-meet"
+                className={`${ic} font-mono`}
+              />
+              <p className="text-[11px] text-gray-400 mt-1">
+                If provided, this Google Meet room link will be automatically assigned when patients select "Video Call" during booking.
+              </p>
+            </div>
+
+            <div>
               <label className="block text-gray-400 text-xs mb-1 font-medium">Hero Introduction Bio</label>
               <textarea
                 rows={3}

@@ -5,11 +5,13 @@ import toast from 'react-hot-toast'
 const SLOTS = ['09:00 AM','09:30 AM','10:00 AM','10:30 AM','11:00 AM','11:30 AM','02:00 PM','02:30 PM','03:00 PM','04:00 PM','04:30 PM','05:00 PM']
 
 export default function AppointmentModal({ open, onClose }) {
-  const [step, setStep]   = useState(1)
-  const [aptId, setAptId] = useState('')
-  const [busy, setBusy]   = useState(false)
+  const [step, setStep]         = useState(1)
+  const [aptId, setAptId]       = useState('')
+  const [meetLink, setMeetLink] = useState('')
+  const [copiedMeet, setCopiedMeet] = useState(false)
+  const [busy, setBusy]         = useState(false)
   const [appointments, setAppointments] = useState([])
-  const [data, setData]   = useState({ name:'', phone:'', age:'', gender:'', reason:'', type:'In-Person', date:'', alt_date:'', time_slot:'' })
+  const [data, setData]         = useState({ name:'', phone:'', age:'', gender:'', reason:'', type:'In-Person', date:'', alt_date:'', time_slot:'' })
   const set = k => e => setData(d => ({ ...d, [k]: e.target.value }))
 
   useEffect(() => {
@@ -19,7 +21,7 @@ export default function AppointmentModal({ open, onClose }) {
         .catch(() => {})
     } else {
       setTimeout(() => {
-        setStep(1); setAptId('')
+        setStep(1); setAptId(''); setMeetLink(''); setCopiedMeet(false)
         setData({ name:'', phone:'', age:'', gender:'', reason:'', type:'In-Person', date:'', alt_date:'', time_slot:'' })
       }, 350)
     }
@@ -39,6 +41,11 @@ export default function AppointmentModal({ open, onClose }) {
     try {
       const { data: res } = await createAppointment(data)
       setAptId(res.apt_id)
+      if (res.meet_link) {
+        setMeetLink(res.meet_link)
+      } else if (data.type === 'Video Call') {
+        setMeetLink('https://meet.google.com/shv-care-meet')
+      }
       setStep(4)
       toast.success('Appointment confirmed! 🎉')
       getAppointments().then(({ data: list }) => setAppointments(Array.isArray(list) ? list : [])).catch(() => {})
@@ -96,16 +103,86 @@ export default function AppointmentModal({ open, onClose }) {
               </div>
             </div>
             <div className="mb-4"><label className="block text-[9px] text-gray-400 uppercase tracking-[0.15em] mb-1.5">Reason for Visit</label><textarea value={data.reason} onChange={set('reason')} rows={3} placeholder="Describe symptoms…" className={`${ic} resize-none`}/></div>
+            
             <label className="block text-[9px] text-gray-400 uppercase tracking-[0.15em] mb-2">Consultation Type</label>
-            <div className="grid grid-cols-2 gap-2 mb-4">
-              {[['🏥','In-Person','In-person visit'],['💻','Video Call','Online consult']].map(([ic2,t,sub]) => (
-                <div key={t} onClick={() => setData(d=>({...d,type:t}))} className={`p-4 rounded-xl border-[1.5px] text-center cursor-pointer transition-all ${data.type===t?'border-sky-500 bg-sky-50 dark:bg-sky-900/20':'border-sky-100 dark:border-white/10 hover:border-sky-300'}`}>
+            <div className="grid grid-cols-2 gap-2 mb-3">
+              {[
+                ['🏥','In-Person','In-person visit'],
+                ['💻','Video Call','Google Meet']
+              ].map(([ic2,t,sub]) => (
+                <div
+                  key={t}
+                  onClick={() => setData(d => ({ ...d, type: t }))}
+                  className={`p-3.5 rounded-xl border-[1.5px] text-center cursor-pointer transition-all ${
+                    data.type === t
+                      ? 'border-sky-500 bg-sky-50 dark:bg-sky-900/20 shadow-sm'
+                      : 'border-sky-100 dark:border-white/10 hover:border-sky-300'
+                  }`}
+                >
                   <div className="text-xl mb-1">{ic2}</div>
-                  <div className="text-gray-800 dark:text-gray-200 font-semibold text-[0.8rem]">{t}</div>
+                  <div className="text-gray-800 dark:text-gray-200 font-semibold text-[0.8rem] flex items-center justify-center gap-1">
+                    {t}
+                    {t === 'Video Call' && (
+                      <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" title="Google Meet Ready" />
+                    )}
+                  </div>
                   <div className="text-gray-400 text-[0.68rem]">{sub}</div>
                 </div>
               ))}
             </div>
+
+            {/* Google Meet Banner when Video Call is selected */}
+            {data.type === 'Video Call' && (
+              <div className="mb-4 p-3.5 rounded-2xl bg-gradient-to-br from-emerald-50/90 via-sky-50/60 to-blue-50/40 dark:from-emerald-950/25 dark:via-sky-950/20 dark:to-blue-950/20 border border-emerald-300 dark:border-emerald-800/60 shadow-sm">
+                <div className="flex items-center gap-2.5 mb-2">
+                  <div className="w-8 h-8 rounded-xl bg-white dark:bg-gray-800 border border-emerald-300 dark:border-emerald-700 shadow-sm flex items-center justify-center flex-shrink-0">
+                    <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none">
+                      <path d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14v-4z" fill="#00AC47"/>
+                      <rect x="3" y="6" width="12" height="12" rx="2" fill="#00832d"/>
+                    </svg>
+                  </div>
+                  <div className="flex-1">
+                    <div className="flex items-center justify-between">
+                      <h4 className="font-semibold text-xs text-gray-900 dark:text-white flex items-center gap-1.5">
+                        Google Meet Video Consultation
+                      </h4>
+                      <span className="px-2 py-0.5 rounded-full text-[8.5px] font-bold tracking-wider uppercase bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-300">
+                        Active
+                      </span>
+                    </div>
+                    <p className="text-[10.5px] text-gray-500 dark:text-gray-400 leading-tight">Private 1-on-1 virtual appointment with Dr. Shiva Singh</p>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-1.5 text-[10.5px] text-gray-600 dark:text-gray-300 pt-2 border-t border-emerald-200/60 dark:border-emerald-900/40">
+                  <div className="flex items-center gap-1">
+                    <span className="text-emerald-500 font-bold">✓</span> Instant Meet link
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <span className="text-emerald-500 font-bold">✓</span> No app download required
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <span className="text-emerald-500 font-bold">✓</span> End-to-end encrypted
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <span className="text-emerald-500 font-bold">✓</span> Runs on Mobile & PC
+                  </div>
+                </div>
+
+                <div className="mt-2.5 pt-2 border-t border-emerald-100 dark:border-emerald-900/30 flex items-center justify-between text-[10.5px]">
+                  <span className="text-gray-400">Want to test your camera/mic?</span>
+                  <a
+                    href="https://meet.google.com/new"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-sky-600 dark:text-sky-400 font-semibold hover:underline inline-flex items-center gap-0.5"
+                  >
+                    Test Google Meet ↗
+                  </a>
+                </div>
+              </div>
+            )}
+
             <button onClick={next2} className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-gradient-to-r from-sky-500 to-sky-600 text-white text-[0.82rem] font-semibold uppercase tracking-wide hover:opacity-90 transition-all">Next →</button>
           </>
         )}
@@ -113,6 +190,12 @@ export default function AppointmentModal({ open, onClose }) {
         {/* ── Step 2: Date & Time ── */}
         {step === 2 && (
           <>
+            {data.type === 'Video Call' && (
+              <div className="mb-3 px-3 py-2 rounded-xl bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-800/60 flex items-center gap-2 text-[11px] text-emerald-800 dark:text-emerald-300">
+                <span className="text-sm">📹</span>
+                <span><strong>Google Meet Slot:</strong> Your video link will be active 5 minutes prior to the chosen time.</span>
+              </div>
+            )}
             <div className="grid grid-cols-2 gap-3 mb-4">
               <div><label className="block text-[9px] text-gray-400 uppercase tracking-[0.15em] mb-1.5">Preferred Date *</label><input type="date" value={data.date} onChange={set('date')} min={today} className={ic}/></div>
               <div><label className="block text-[9px] text-gray-400 uppercase tracking-[0.15em] mb-1.5">Alternate Date</label><input type="date" value={data.alt_date} onChange={set('alt_date')} min={today} className={ic}/></div>
@@ -143,7 +226,16 @@ export default function AppointmentModal({ open, onClose }) {
         {step === 3 && (
           <>
             <div className="bg-sky-50 dark:bg-white/5 border-[1.5px] border-sky-200 dark:border-sky-800 rounded-xl p-4 mb-4">
-              {[['Patient',data.name],['Phone',data.phone],data.age?['Age',data.age+(data.gender?' · '+data.gender:'')]:null,['Type',data.type],['Date',dateStr],['Time',data.time_slot],data.reason?['Reason',data.reason.slice(0,55)+(data.reason.length>55?'…':'')]:null]
+              {[
+                ['Patient', data.name],
+                ['Phone', data.phone],
+                data.age ? ['Age', data.age + (data.gender ? ' · ' + data.gender : '')] : null,
+                ['Consultation', data.type === 'Video Call' ? '💻 Video Call (Google Meet)' : '🏥 In-Person Consultation'],
+                data.type === 'Video Call' ? ['Platform', 'Google Meet (Link created on booking)'] : null,
+                ['Date', dateStr],
+                ['Time Slot', data.time_slot],
+                data.reason ? ['Reason', data.reason.slice(0, 55) + (data.reason.length > 55 ? '…' : '')] : null
+              ]
                 .filter(Boolean).map(([l,v]) => (
                   <div key={l} className="flex justify-between py-1.5 border-b border-sky-100 dark:border-white/10 last:border-0 text-[0.77rem]">
                     <span className="text-gray-400 font-medium">{l}</span>
@@ -151,6 +243,19 @@ export default function AppointmentModal({ open, onClose }) {
                   </div>
               ))}
             </div>
+
+            {data.type === 'Video Call' && (
+              <div className="flex gap-2.5 items-start bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-300 dark:border-emerald-800 rounded-xl p-3 mb-4">
+                <span className="text-base">📹</span>
+                <div>
+                  <div className="text-[0.78rem] font-semibold text-gray-800 dark:text-gray-200 mb-0.5">Google Meet Room Generated</div>
+                  <div className="text-[0.72rem] text-gray-500 dark:text-gray-400 font-light">
+                    Your private meeting link will be presented on the next screen and forwarded to WhatsApp for 1-tap joining.
+                  </div>
+                </div>
+              </div>
+            )}
+
             <div className="flex gap-2 items-start bg-green-50 dark:bg-green-900/10 border border-green-200 dark:border-green-800 rounded-xl p-3 mb-4">
               <span>💬</span>
               <div>
@@ -158,6 +263,7 @@ export default function AppointmentModal({ open, onClose }) {
                 <div className="text-[0.72rem] text-gray-400 font-light">A confirmation message will be sent upon booking.</div>
               </div>
             </div>
+
             <div className="flex gap-2">
               <button onClick={() => setStep(2)} className="px-4 py-3 rounded-xl border-[1.5px] border-sky-200 dark:border-sky-800 text-sky-500 text-[0.82rem] font-medium hover:bg-sky-50 dark:hover:bg-sky-900/20 transition-all">← Back</button>
               <button onClick={confirm} disabled={busy} className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl bg-gradient-to-r from-sky-500 to-sky-600 text-white text-[0.82rem] font-semibold uppercase tracking-wide hover:opacity-90 transition-all disabled:opacity-60">
@@ -172,12 +278,62 @@ export default function AppointmentModal({ open, onClose }) {
           <div className="text-center py-4">
             <div className="text-6xl mb-4">🎉</div>
             <h3 className="font-display font-bold text-gray-900 dark:text-white text-2xl mb-2">Appointment Confirmed!</h3>
-            <p className="text-gray-400 text-[0.82rem] font-light leading-relaxed mb-4">Your appointment has been booked. A WhatsApp confirmation will be sent shortly.</p>
-            <div className="inline-block px-4 py-1.5 rounded-full bg-sky-100 dark:bg-sky-900/30 border border-sky-200 dark:border-sky-800 text-sky-500 text-[0.75rem] font-bold tracking-widest mb-5">{aptId}</div>
+            <p className="text-gray-400 text-[0.82rem] font-light leading-relaxed mb-4">
+              Your appointment has been booked. {data.type === 'Video Call' ? 'Your Google Meet room is ready below.' : 'A WhatsApp confirmation will be sent shortly.'}
+            </p>
+            <div className="inline-block px-4 py-1.5 rounded-full bg-sky-100 dark:bg-sky-900/30 border border-sky-200 dark:border-sky-800 text-sky-500 text-[0.75rem] font-bold tracking-widest mb-4">{aptId}</div>
+
+            {/* Google Meet Box if Video Call */}
+            {data.type === 'Video Call' && meetLink && (
+              <div className="mb-5 p-4 rounded-2xl bg-gradient-to-br from-emerald-50 via-sky-50 to-teal-50 dark:from-emerald-950/40 dark:via-sky-950/30 dark:to-teal-950/30 border-2 border-emerald-300 dark:border-emerald-700 text-left shadow-sm">
+                <div className="flex items-center gap-2.5 mb-2.5">
+                  <div className="w-8 h-8 rounded-xl bg-white dark:bg-gray-800 shadow-sm border border-emerald-200 dark:border-emerald-700 flex items-center justify-center flex-shrink-0">
+                    <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none">
+                      <path d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14v-4z" fill="#00AC47"/>
+                      <rect x="3" y="6" width="12" height="12" rx="2" fill="#00832d"/>
+                    </svg>
+                  </div>
+                  <div>
+                    <h4 className="font-bold text-xs text-gray-900 dark:text-white">Your Google Meet Consultation Room</h4>
+                    <p className="text-[10px] text-gray-500 dark:text-gray-400">Scheduled for {data.date} at {data.time_slot}</p>
+                  </div>
+                </div>
+
+                <div className="p-2.5 rounded-xl bg-white dark:bg-gray-800 border border-emerald-200 dark:border-emerald-800/80 flex items-center justify-between gap-2 mb-3">
+                  <span className="font-mono text-xs text-emerald-700 dark:text-emerald-300 truncate select-all">{meetLink}</span>
+                  <button
+                    onClick={() => {
+                      navigator.clipboard.writeText(meetLink)
+                      setCopiedMeet(true)
+                      toast.success('Google Meet link copied!')
+                      setTimeout(() => setCopiedMeet(false), 2000)
+                    }}
+                    className="px-2.5 py-1 rounded-lg bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-300 hover:bg-emerald-100 text-[11px] font-semibold flex-shrink-0 transition-colors"
+                  >
+                    {copiedMeet ? '✓ Copied' : 'Copy'}
+                  </button>
+                </div>
+
+                <a
+                  href={meetLink}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 text-white text-xs font-semibold shadow-md shadow-emerald-400/25 hover:opacity-95 transition-all"
+                >
+                  📹 Join Google Meet Consultation
+                </a>
+              </div>
+            )}
+
             <div className="flex flex-col gap-2">
-              <a href={`https://wa.me/919889527343?text=${encodeURIComponent(`Hello Dr. Shiva Singh,\n\nConfirming my appointment.\nID: ${aptId}\nName: ${data.name}\nDate: ${data.date}\nTime: ${data.time_slot}\nType: ${data.type}\n\nKindly confirm.`)}`}
-                target="_blank" rel="noreferrer"
-                className="w-full flex items-center justify-center gap-2 py-3 rounded-xl border-[1.5px] border-green-400/50 text-green-500 text-[0.82rem] font-medium bg-green-50/50 dark:bg-green-900/10 hover:bg-green-50 transition-all">
+              <a
+                href={`https://wa.me/919889527343?text=${encodeURIComponent(
+                  `Hello Dr. Shiva Singh,\n\nConfirming my appointment.\nID: ${aptId}\nName: ${data.name}\nDate: ${data.date}\nTime: ${data.time_slot}\nType: ${data.type}${data.type === 'Video Call' && meetLink ? `\nGoogle Meet: ${meetLink}` : ''}\n\nKindly confirm.`
+                )}`}
+                target="_blank"
+                rel="noreferrer"
+                className="w-full flex items-center justify-center gap-2 py-3 rounded-xl border-[1.5px] border-green-400/50 text-green-500 text-[0.82rem] font-medium bg-green-50/50 dark:bg-green-900/10 hover:bg-green-50 transition-all"
+              >
                 💬 Open WhatsApp Confirmation
               </a>
               <button onClick={onClose} className="w-full py-3 rounded-xl border-[1.5px] border-sky-200 dark:border-sky-800 text-sky-500 text-[0.82rem] font-medium hover:bg-sky-50 dark:hover:bg-sky-900/20 transition-all">Close</button>

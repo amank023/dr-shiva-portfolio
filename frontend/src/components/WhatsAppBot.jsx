@@ -94,7 +94,8 @@ export default function WhatsAppBot() {
         createAppointment(aptRecord)
           .then(({ data: res }) => {
             const idBadge = res.apt_id ? `\nBooking ID: *${res.apt_id}*` : ''
-            addTyping(`✅ *Appointment Request Confirmed!*${idBadge}\n\n👤 ${aptRecord.name}\n📅 ${text}\n🏥 ${aptRecord.type}\n\nDr. Singh's team will confirm details on *${aptRecord.phone}* within 2 hours. 🙏`, ['📞 Call Now', '🔙 Main Menu'], 1000)
+            const meetInfo = (aptRecord.type === 'Video Call' && res.meet_link) ? `\n📹 *Google Meet:* ${res.meet_link}` : ''
+            addTyping(`✅ *Appointment Request Confirmed!*${idBadge}\n\n👤 ${aptRecord.name}\n📅 ${text}\n🏥 ${aptRecord.type}${meetInfo}\n\nDr. Singh's team will confirm details on *${aptRecord.phone}* within 2 hours. 🙏`, ['📞 Call Now', '🔙 Main Menu'], 1000)
           })
           .catch(() => {
             addTyping(`✅ *Appointment Request Received!*\n\n👤 ${aptRecord.name}\n📅 ${text}\n🏥 ${aptRecord.type}\n\nDr. Singh's team will confirm on *${aptRecord.phone}* within 2 hours. 🙏`, ['📞 Call Now', '🔙 Main Menu'], 1000)

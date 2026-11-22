@@ -185,9 +185,28 @@ export default function AppointmentsTab() {
                       <div className="text-[11px] text-gray-400">{a.time_slot}</div>
                     </td>
                     <td className="py-3.5 px-4">
-                      <span className="px-2 py-0.5 rounded-md bg-gray-100 dark:bg-white/10 text-gray-700 dark:text-gray-300 text-[11px] font-medium">
-                        {a.type || 'In-Person'}
-                      </span>
+                      {a.type === 'Video Call' ? (
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <span className="px-2 py-0.5 rounded-md bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 text-[11px] font-medium flex items-center gap-1">
+                            💻 Video
+                          </span>
+                          {a.meet_link && (
+                            <a
+                              href={a.meet_link}
+                              target="_blank"
+                              rel="noreferrer"
+                              title="Join Google Meet"
+                              className="px-2 py-0.5 rounded-md bg-emerald-500 hover:bg-emerald-600 text-white text-[10px] font-semibold flex items-center gap-1 transition-colors shadow-sm"
+                            >
+                              📹 Meet ↗
+                            </a>
+                          )}
+                        </div>
+                      ) : (
+                        <span className="px-2 py-0.5 rounded-md bg-gray-100 dark:bg-white/10 text-gray-700 dark:text-gray-300 text-[11px] font-medium">
+                          🏥 In-Person
+                        </span>
+                      )}
                     </td>
                     <td className="py-3.5 px-4">
                       <span className={`inline-block px-2.5 py-1 rounded-full text-[10px] font-semibold uppercase tracking-wider border ${statusBadge(a.status)}`}>
@@ -291,8 +310,79 @@ export default function AppointmentsTab() {
               )}
               <div className="flex justify-between py-1 border-b border-sky-100 dark:border-white/5">
                 <span className="text-gray-400">Consultation Type</span>
-                <span className="font-semibold text-gray-800 dark:text-gray-200">{selectedApt.type}</span>
+                <span className="font-semibold text-gray-800 dark:text-gray-200">
+                  {selectedApt.type === 'Video Call' ? '💻 Video Call (Google Meet)' : '🏥 In-Person'}
+                </span>
               </div>
+              {selectedApt.type === 'Video Call' && (
+                <div className="p-3.5 rounded-xl bg-emerald-50/70 dark:bg-emerald-950/30 border border-emerald-300 dark:border-emerald-800/70 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-emerald-800 dark:text-emerald-300 font-bold flex items-center gap-1.5 text-xs">
+                      📹 Google Meet Room Link
+                    </span>
+                    {selectedApt.meet_link && (
+                      <button
+                        onClick={() => {
+                          navigator.clipboard.writeText(selectedApt.meet_link)
+                          toast.success('Google Meet link copied!')
+                        }}
+                        className="text-[11px] text-emerald-600 dark:text-emerald-400 font-semibold hover:underline"
+                      >
+                        Copy Link
+                      </button>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="text"
+                      value={selectedApt.meet_link || ''}
+                      onChange={(e) => {
+                        const val = e.target.value
+                        setSelectedApt(prev => ({ ...prev, meet_link: val }))
+                      }}
+                      placeholder="https://meet.google.com/xxx-yyyy-zzz"
+                      className="flex-1 bg-white dark:bg-gray-800 border border-emerald-300 dark:border-emerald-700 rounded-lg px-2.5 py-1.5 text-xs text-gray-800 dark:text-gray-200 font-mono outline-none focus:border-emerald-500"
+                    />
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        try {
+                          await updateAppointment(selectedApt.id, { meet_link: selectedApt.meet_link })
+                          toast.success('Google Meet link saved!')
+                          loadData()
+                        } catch {
+                          toast.error('Failed to update meeting link')
+                        }
+                      }}
+                      className="px-3 py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white font-semibold text-xs shadow-sm transition-colors"
+                    >
+                      Save
+                    </button>
+                  </div>
+                  {selectedApt.meet_link && (
+                    <div className="flex items-center justify-between pt-1">
+                      <a
+                        href={selectedApt.meet_link}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 hover:underline"
+                      >
+                        Join Google Meet Room ↗
+                      </a>
+                      <a
+                        href={`https://wa.me/${(selectedApt.phone || '').replace(/[^0-9]/g, '')}?text=${encodeURIComponent(
+                          `Hello ${selectedApt.name}, your Google Meet link for Dr. Shiva Singh's consultation is: ${selectedApt.meet_link}`
+                        )}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-[11px] text-green-600 dark:text-green-400 hover:underline"
+                      >
+                        Send Link on WhatsApp 💬
+                      </a>
+                    </div>
+                  )}
+                </div>
+              )}
               <div className="flex justify-between py-1 border-b border-sky-100 dark:border-white/5">
                 <span className="text-gray-400">Current Status</span>
                 <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-wider ${statusBadge(selectedApt.status)}`}>
@@ -411,7 +501,7 @@ export default function AppointmentsTab() {
                     className="w-full bg-sky-50/50 dark:bg-white/5 border border-sky-100 dark:border-white/10 rounded-xl px-3 py-2 text-xs text-gray-800 dark:text-gray-200 outline-none focus:border-sky-500"
                   >
                     <option value="In-Person">🏥 In-Person</option>
-                    <option value="Video Call">💻 Video Call</option>
+                    <option value="Video Call">💻 Video Call (Google Meet)</option>
                   </select>
                 </div>
                 <div>
@@ -427,6 +517,19 @@ export default function AppointmentsTab() {
                   </select>
                 </div>
               </div>
+
+              {newApt.type === 'Video Call' && (
+                <div>
+                  <label className="block text-gray-400 mb-1">Google Meet Link (Optional — auto-generated if blank)</label>
+                  <input
+                    type="text"
+                    value={newApt.meet_link || ''}
+                    onChange={e => setNewApt(p => ({ ...p, meet_link: e.target.value }))}
+                    placeholder="https://meet.google.com/xxx-yyyy-zzz"
+                    className="w-full bg-sky-50/50 dark:bg-white/5 border border-emerald-300 dark:border-emerald-800 rounded-xl px-3 py-2 text-xs text-gray-800 dark:text-gray-200 outline-none focus:border-emerald-500 font-mono"
+                  />
+                </div>
+              )}
               <div>
                 <label className="block text-gray-400 mb-1">Reason for Visit</label>
                 <textarea

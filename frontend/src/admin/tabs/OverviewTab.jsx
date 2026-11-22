@@ -177,7 +177,11 @@ export default function OverviewTab({ stats, onNavigateTab }) {
                     </td>
                     <td className="py-3">
                       <span className="text-[11px] font-medium text-gray-600 dark:text-gray-300">
-                        {a.type === 'Video Call' ? '💻 Video' : '🏥 In-Person'}
+                        {a.type === 'Video Call' ? (
+                          <span className="inline-flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-semibold">
+                            💻 Video (Meet)
+                          </span>
+                        ) : '🏥 In-Person'}
                       </span>
                     </td>
                     <td className="py-3">
