@@ -10,9 +10,14 @@ export default function AppointmentModal({ open, onClose }) {
   const [meetLink, setMeetLink] = useState('')
   const [copiedMeet, setCopiedMeet] = useState(false)
   const [busy, setBusy]         = useState(false)
+  const [errors, setErrors]     = useState({})
   const [appointments, setAppointments] = useState([])
   const [data, setData]         = useState({ name:'', phone:'', age:'', gender:'', reason:'', type:'In-Person', date:'', alt_date:'', time_slot:'' })
-  const set = k => e => setData(d => ({ ...d, [k]: e.target.value }))
+
+  const set = k => e => {
+    setData(d => ({ ...d, [k]: e.target.value }))
+    if (errors[k]) setErrors(prev => ({ ...prev, [k]: '' }))
+  }
 
   useEffect(() => {
     if (open) {
@@ -21,19 +26,27 @@ export default function AppointmentModal({ open, onClose }) {
         .catch(() => {})
     } else {
       setTimeout(() => {
-        setStep(1); setAptId(''); setMeetLink(''); setCopiedMeet(false)
+        setStep(1); setAptId(''); setMeetLink(''); setCopiedMeet(false); setErrors({})
         setData({ name:'', phone:'', age:'', gender:'', reason:'', type:'In-Person', date:'', alt_date:'', time_slot:'' })
       }, 350)
     }
   }, [open])
 
   const next2 = () => {
-    if (!data.name.trim() || !data.phone.trim()) return toast.error('Name and phone are required')
+    const errs = {}
+    if (!data.name.trim())  errs.name  = 'Please enter patient full name'
+    if (!data.phone.trim()) errs.phone = 'Please enter contact phone number'
+    if (Object.keys(errs).length > 0) {
+      setErrors(errs)
+      toast.error('Please enter patient name and contact phone')
+      return
+    }
+    setErrors({})
     setStep(2)
   }
   const next3 = () => {
-    if (!data.date)      return toast.error('Please select a date')
-    if (!data.time_slot) return toast.error('Please select a time slot')
+    if (!data.date)      return toast.error('Please select an appointment date')
+    if (!data.time_slot) return toast.error('Please select an available time slot')
     setStep(3)
   }
   const confirm = async () => {
@@ -61,8 +74,8 @@ export default function AppointmentModal({ open, onClose }) {
   if (!open) return null
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/55 backdrop-blur-md modal-scope" onClick={e => e.target === e.currentTarget && onClose()}>
-      <div className="bg-white dark:bg-gray-900 border border-sky-200 dark:border-sky-800 rounded-2xl p-7 w-full max-w-md max-h-[92vh] overflow-y-auto shadow-2xl modal-scope" style={{ animation:'fadeUp 0.35s ease both' }}>
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-md modal-scope" onClick={e => e.target === e.currentTarget && onClose()}>
+      <div className="bg-white dark:bg-gray-900 border border-sky-200 dark:border-sky-800 rounded-2xl p-7 w-full max-w-md max-h-[92vh] overflow-y-auto shadow-2xl modal-scope relative z-[101]" onClick={e => e.stopPropagation()} style={{ animation:'fadeUp 0.35s ease both' }}>
 
         {/* Header */}
         <div className="flex items-start justify-between mb-4">
@@ -70,41 +83,108 @@ export default function AppointmentModal({ open, onClose }) {
             <h2 className="font-display font-bold text-gray-900 dark:text-white text-2xl leading-tight">Book an <em className="text-sky-500 font-light italic">Appointment</em></h2>
             <p className="text-gray-400 text-[0.75rem] mt-1">👨‍⚕️ Dr. Shiva Singh · Critical Care</p>
           </div>
-          <button onClick={onClose} className="w-8 h-8 rounded-xl bg-sky-50 dark:bg-white/10 flex items-center justify-center text-gray-400 hover:text-gray-600 dark:hover:text-white transition-colors text-base">✕</button>
+          <button onClick={onClose} className="w-8 h-8 rounded-xl bg-sky-50 dark:bg-white/10 flex items-center justify-center text-gray-400 hover:text-gray-600 dark:hover:text-white transition-colors text-base cursor-pointer">✕</button>
         </div>
 
-        {/* Progress */}
+        {/* Progress Navigation */}
         {step < 4 && (
-          <>
-            <div className="flex gap-1.5 mb-1">
-              {[1,2,3].map(s => (
-                <div key={s} className={`flex-1 h-[3px] rounded-full transition-all duration-400 ${s < step ? 'bg-sky-500' : s === step ? 'bg-sky-300' : 'bg-sky-100 dark:bg-sky-900/40'}`}/>
+          <div className="mb-5">
+            <div className="flex gap-1.5 mb-1.5">
+              {[1, 2, 3].map(s => (
+                <div
+                  key={s}
+                  onClick={() => {
+                    if (s === 1) setStep(1)
+                    if (s === 2 && data.name.trim() && data.phone.trim()) setStep(2)
+                    if (s === 3 && data.name.trim() && data.phone.trim() && data.date && data.time_slot) setStep(3)
+                  }}
+                  className={`flex-1 h-[4px] rounded-full transition-all duration-300 cursor-pointer ${
+                    s < step ? 'bg-sky-500' : s === step ? 'bg-sky-400 ring-2 ring-sky-300/40' : 'bg-sky-100 dark:bg-sky-900/40'
+                  }`}
+                />
               ))}
             </div>
-            <div className="flex justify-between mb-5">
-              {['Details','Schedule','Confirm'].map((l,i) => (
-                <span key={l} className={`text-[9px] uppercase tracking-[0.1em] font-medium ${i+1===step?'text-sky-500':'text-gray-400'}`}>{l}</span>
-              ))}
+            <div className="flex justify-between text-[9px] uppercase tracking-[0.1em] font-semibold">
+              <button
+                type="button"
+                onClick={() => setStep(1)}
+                className={`transition-colors ${step === 1 ? 'text-sky-500' : 'text-gray-400 hover:text-sky-400'}`}
+              >
+                1. Details
+              </button>
+              <button
+                type="button"
+                onClick={next2}
+                className={`transition-colors ${step === 2 ? 'text-sky-500' : 'text-gray-400 hover:text-sky-400'}`}
+              >
+                2. Schedule
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  if (data.name.trim() && data.phone.trim() && data.date && data.time_slot) setStep(3)
+                  else next3()
+                }}
+                className={`transition-colors ${step === 3 ? 'text-sky-500' : 'text-gray-400 hover:text-sky-400'}`}
+              >
+                3. Confirm
+              </button>
             </div>
-          </>
+          </div>
         )}
 
         {/* ── Step 1: Patient Details ── */}
         {step === 1 && (
           <>
             <div className="grid grid-cols-2 gap-3 mb-3">
-              <div><label className="block text-[9px] text-gray-400 uppercase tracking-[0.15em] mb-1.5">Full Name *</label><input value={data.name} onChange={set('name')} placeholder="Patient name" className={ic}/></div>
-              <div><label className="block text-[9px] text-gray-400 uppercase tracking-[0.15em] mb-1.5">Phone *</label><input value={data.phone} onChange={set('phone')} placeholder="+91-XXXXXXXXXX" type="tel" className={ic}/></div>
-              <div><label className="block text-[9px] text-gray-400 uppercase tracking-[0.15em] mb-1.5">Age</label><input value={data.age} onChange={set('age')} placeholder="Age" type="number" className={ic}/></div>
-              <div><label className="block text-[9px] text-gray-400 uppercase tracking-[0.15em] mb-1.5">Gender</label>
+              <div>
+                <label className="block text-[9px] text-gray-400 uppercase tracking-[0.15em] mb-1.5 font-medium">
+                  Full Name *
+                </label>
+                <input
+                  value={data.name}
+                  onChange={set('name')}
+                  placeholder="Patient name"
+                  className={`${ic} ${errors.name ? 'border-rose-500 bg-rose-50/20 dark:bg-rose-950/20' : ''}`}
+                />
+                {errors.name && <p className="text-[10px] text-rose-500 mt-1 font-medium">{errors.name}</p>}
+              </div>
+
+              <div>
+                <label className="block text-[9px] text-gray-400 uppercase tracking-[0.15em] mb-1.5 font-medium">
+                  Phone *
+                </label>
+                <input
+                  value={data.phone}
+                  onChange={set('phone')}
+                  placeholder="+91-XXXXXXXXXX"
+                  type="tel"
+                  className={`${ic} ${errors.phone ? 'border-rose-500 bg-rose-50/20 dark:bg-rose-950/20' : ''}`}
+                />
+                {errors.phone && <p className="text-[10px] text-rose-500 mt-1 font-medium">{errors.phone}</p>}
+              </div>
+
+              <div>
+                <label className="block text-[9px] text-gray-400 uppercase tracking-[0.15em] mb-1.5 font-medium">Age</label>
+                <input value={data.age} onChange={set('age')} placeholder="Age" type="number" className={ic}/>
+              </div>
+
+              <div>
+                <label className="block text-[9px] text-gray-400 uppercase tracking-[0.15em] mb-1.5 font-medium">Gender</label>
                 <select value={data.gender} onChange={set('gender')} className={ic}>
                   <option value="">Select</option><option>Male</option><option>Female</option><option>Other</option>
                 </select>
               </div>
             </div>
-            <div className="mb-4"><label className="block text-[9px] text-gray-400 uppercase tracking-[0.15em] mb-1.5">Reason for Visit</label><textarea value={data.reason} onChange={set('reason')} rows={3} placeholder="Describe symptoms…" className={`${ic} resize-none`}/></div>
+
+            <div className="mb-4">
+              <label className="block text-[9px] text-gray-400 uppercase tracking-[0.15em] mb-1.5 font-medium">Reason for Visit</label>
+              <textarea value={data.reason} onChange={set('reason')} rows={2} placeholder="Describe symptoms or medical concern…" className={`${ic} resize-none`}/>
+            </div>
             
-            <label className="block text-[9px] text-gray-400 uppercase tracking-[0.15em] mb-2 font-semibold">Consultation Type *</label>
+            <label className="block text-[9px] text-gray-400 uppercase tracking-[0.15em] mb-2 font-semibold">
+              Consultation Type *
+            </label>
             <div className="grid grid-cols-2 gap-2.5 mb-3">
               {/* In-Person Option */}
               <button
@@ -123,7 +203,7 @@ export default function AppointmentModal({ open, onClose }) {
                 <div className="text-2xl mb-1">🏥</div>
                 <div className="text-gray-900 dark:text-gray-100 font-bold text-xs flex items-center justify-center gap-1">
                   In-Person
-                  {data.type === 'In-Person' && <span className="text-sky-500 text-xs">✓</span>}
+                  {data.type === 'In-Person' && <span className="text-sky-500 text-xs font-bold">✓</span>}
                 </div>
                 <div className="text-gray-400 text-[10px] mt-0.5">Hospital Clinic Visit</div>
               </button>
@@ -151,7 +231,7 @@ export default function AppointmentModal({ open, onClose }) {
               </button>
             </div>
 
-            {/* Google Meet Banner when Video Call is selected */}
+            {/* Google Meet Interactive Card */}
             {data.type === 'Video Call' && (
               <div className="mb-4 p-4 rounded-2xl bg-gradient-to-br from-emerald-50 via-teal-50/70 to-sky-50/60 dark:from-emerald-950/30 dark:via-teal-950/20 dark:to-sky-950/20 border-2 border-emerald-300 dark:border-emerald-700 shadow-sm space-y-3">
                 <div className="flex items-center gap-2.5">
@@ -170,12 +250,12 @@ export default function AppointmentModal({ open, onClose }) {
                         Ready
                       </span>
                     </div>
-                    <p className="text-[10.5px] text-gray-500 dark:text-gray-400 leading-tight">Private 1-on-1 virtual appointment with Dr. Shiva Singh</p>
+                    <p className="text-[10.5px] text-gray-500 dark:text-gray-400 leading-tight">Private 1-on-1 virtual consult with Dr. Shiva Singh</p>
                   </div>
                 </div>
 
-                {/* Direct Action: Open Google Meet Now */}
-                <div className="pt-1">
+                {/* Direct Action Buttons */}
+                <div className="space-y-2 pt-1">
                   <button
                     type="button"
                     onClick={() => {
@@ -187,29 +267,40 @@ export default function AppointmentModal({ open, onClose }) {
                   >
                     <span>📹</span> Open Google Meet Call Now ↗
                   </button>
-                  <p className="text-[10px] text-gray-400 text-center mt-1.5">
-                    Click above to join now, or click <strong>Next →</strong> to choose a date & time slot.
-                  </p>
+
+                  <button
+                    type="button"
+                    onClick={next2}
+                    className="w-full py-2 px-3 rounded-xl border border-emerald-300 dark:border-emerald-700 bg-white dark:bg-gray-800 text-emerald-700 dark:text-emerald-300 font-semibold text-[11px] flex items-center justify-center gap-1.5 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 transition-colors cursor-pointer"
+                  >
+                    <span>📅</span> Or Continue Scheduling Video Slot →
+                  </button>
                 </div>
 
                 <div className="grid grid-cols-2 gap-1.5 text-[10px] text-gray-600 dark:text-gray-300 pt-2 border-t border-emerald-200/60 dark:border-emerald-800/40">
                   <div className="flex items-center gap-1">
-                    <span className="text-emerald-500 font-bold">✓</span> Instant Meet link
+                    <span className="text-emerald-500 font-bold">✓</span> Instant Meet room
                   </div>
                   <div className="flex items-center gap-1">
-                    <span className="text-emerald-500 font-bold">✓</span> No app download required
+                    <span className="text-emerald-500 font-bold">✓</span> No app download needed
                   </div>
                   <div className="flex items-center gap-1">
                     <span className="text-emerald-500 font-bold">✓</span> End-to-end encrypted
                   </div>
                   <div className="flex items-center gap-1">
-                    <span className="text-emerald-500 font-bold">✓</span> Runs on Phone & PC
+                    <span className="text-emerald-500 font-bold">✓</span> Mobile & PC browser
                   </div>
                 </div>
               </div>
             )}
 
-            <button onClick={next2} className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-gradient-to-r from-sky-500 to-sky-600 text-white text-[0.82rem] font-semibold uppercase tracking-wide hover:opacity-90 transition-all cursor-pointer">Next →</button>
+            <button
+              type="button"
+              onClick={next2}
+              className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-gradient-to-r from-sky-500 to-sky-600 hover:from-sky-600 hover:to-sky-700 text-white text-[0.82rem] font-semibold uppercase tracking-wide hover:opacity-90 shadow-md shadow-sky-400/20 active:scale-[0.99] transition-all cursor-pointer"
+            >
+              Next Step: Select Schedule →
+            </button>
           </>
         )}
 

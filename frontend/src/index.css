@@ -6,8 +6,8 @@
 html { scroll-behavior: smooth; }
 body { font-family: 'DM Sans', sans-serif; -webkit-font-smoothing: antialiased; overflow-x: hidden; }
 
-/* Custom cursor only active on public portfolio */
-body.custom-cursor { cursor: none; }
+/* Custom cursor: Keep native pointer visible at all times to eliminate lag and missed clicks */
+body.custom-cursor { cursor: default; }
 body.custom-cursor input, body.custom-cursor textarea { cursor: text; }
 body.custom-cursor select, body.custom-cursor button, body.custom-cursor [role="button"], body.custom-cursor a { cursor: pointer; }
 @media (max-width: 768px) { body.custom-cursor { cursor: auto; } }
