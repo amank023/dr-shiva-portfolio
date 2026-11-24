@@ -1,0 +1,60 @@
+[build]
+  command = "npm run build"
+  publish = "frontend/dist"
+  functions = "netlify/functions"
+
+[functions]
+  node_bundler = "esbuild"
+  included_files = ["backend/**"]
+
+# Serverless function redirects for API endpoints
+[[redirects]]
+  from = "/api/*"
+  to = "/.netlify/functions/api/api/:splat"
+  status = 200
+
+[[redirects]]
+  from = "/messages"
+  to = "/.netlify/functions/api/messages"
+  status = 200
+
+[[redirects]]
+  from = "/chatlogs"
+  to = "/.netlify/functions/api/chatlogs"
+  status = 200
+
+[[redirects]]
+  from = "/chat-logs"
+  to = "/.netlify/functions/api/chat-logs"
+  status = 200
+
+[[redirects]]
+  from = "/appointments"
+  to = "/.netlify/functions/api/appointments"
+  status = 200
+
+[[redirects]]
+  from = "/reviews"
+  to = "/.netlify/functions/api/reviews"
+  status = 200
+
+[[redirects]]
+  from = "/stats"
+  to = "/.netlify/functions/api/stats"
+  status = 200
+
+[[redirects]]
+  from = "/content"
+  to = "/.netlify/functions/api/content"
+  status = 200
+
+[[redirects]]
+  from = "/health"
+  to = "/.netlify/functions/api/health"
+  status = 200
+
+# SPA client-side routing (ensures /admin, etc. don't 404 on refresh)
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200

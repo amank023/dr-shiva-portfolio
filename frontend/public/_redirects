@@ -1,0 +1,10 @@
+/api/*  /.netlify/functions/api/api/:splat  200
+/messages  /.netlify/functions/api/messages  200
+/chatlogs  /.netlify/functions/api/chatlogs  200
+/chat-logs  /.netlify/functions/api/chat-logs  200
+/appointments  /.netlify/functions/api/appointments  200
+/reviews  /.netlify/functions/api/reviews  200
+/stats  /.netlify/functions/api/stats  200
+/content  /.netlify/functions/api/content  200
+/health  /.netlify/functions/api/health  200
+/*  /index.html  200

@@ -2,11 +2,15 @@
   "name": "dr-shiva-portfolio",
   "version": "1.0.0",
   "scripts": {
+    "build": "cd frontend && npm install && npm run build",
     "install:all": "cd backend && npm install && cd ../frontend && npm install",
     "dev": "concurrently \"cd backend && npx nodemon server.js\" \"cd frontend && npx vite --port 5173\"",
     "start": "cd backend && node server.js"
   },
   "devDependencies": {
     "concurrently": "^8.2.2"
+  },
+  "dependencies": {
+    "serverless-http": "^4.0.0"
   }
 }

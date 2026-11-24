@@ -61,33 +61,38 @@ api.interceptors.response.use(
     if (shouldRetry && typeof window !== 'undefined') {
       originalRequest._retry = true
       const host = window.location.hostname || 'localhost'
-      // Strip any leading /api/ or / from url
-      const rawUrl = originalRequest.url || ''
-      const cleanPath = rawUrl.replace(/^\/?api\/?/, '').replace(/^\//, '')
-      const fallbackUrl = `http://${host}:5000/api/${cleanPath}`
+      const isHttps = window.location.protocol === 'https:'
+      const isLocal = host === 'localhost' || host === '127.0.0.1' || host.startsWith('192.168.') || host.startsWith('10.') || !isHttps
 
-      console.warn(`[API Client Retry] Attempting direct backend connection: ${fallbackUrl}`)
+      if (isLocal) {
+        // Strip any leading /api/ or / from url
+        const rawUrl = originalRequest.url || ''
+        const cleanPath = rawUrl.replace(/^\/?api\/?/, '').replace(/^\//, '')
+        const fallbackUrl = `http://${host}:5000/api/${cleanPath}`
 
-      try {
-        const directRes = await axios({
-          ...originalRequest,
-          url: fallbackUrl,
-          baseURL: '',
-          timeout: 10000
-        })
-        return directRes
-      } catch (retryErr) {
-        // Also try direct non-prefixed root route as secondary fallback
-        const secondaryFallback = `http://${host}:5000/${cleanPath}`
+        console.warn(`[API Client Retry] Attempting direct backend connection: ${fallbackUrl}`)
+
         try {
-          return await axios({
+          const directRes = await axios({
             ...originalRequest,
-            url: secondaryFallback,
+            url: fallbackUrl,
             baseURL: '',
             timeout: 10000
           })
-        } catch (_) {
-          return Promise.reject(retryErr)
+          return directRes
+        } catch (retryErr) {
+          // Also try direct non-prefixed root route as secondary fallback
+          const secondaryFallback = `http://${host}:5000/${cleanPath}`
+          try {
+            return await axios({
+              ...originalRequest,
+              url: secondaryFallback,
+              baseURL: '',
+              timeout: 10000
+            })
+          } catch (_) {
+            return Promise.reject(retryErr)
+          }
         }
       }
     }

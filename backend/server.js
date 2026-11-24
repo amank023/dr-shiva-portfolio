@@ -62,8 +62,12 @@ app.use((err, req, res, next) => {
   res.status(500).json({ error: err.message || 'Internal Server Error' });
 });
 
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, '0.0.0.0', () => {
-  console.log(`🚀 Server running on http://localhost:${PORT}`);
-  console.log(`🗄️  Active Database Engine: ${isFirebaseConfigured() ? '🔥 Firebase Cloud Firestore' : '📁 Local LowDB (portfolio.json)'}`);
-});
+if (require.main === module) {
+  const PORT = process.env.PORT || 5000;
+  app.listen(PORT, '0.0.0.0', () => {
+    console.log(`🚀 Server running on http://localhost:${PORT}`);
+    console.log(`🗄️  Active Database Engine: ${isFirebaseConfigured() ? '🔥 Firebase Cloud Firestore' : '📁 Local LowDB (portfolio.json)'}`);
+  });
+}
+
+module.exports = app;

@@ -4,11 +4,29 @@ const path           = require('path');
 const fs             = require('fs');
 const defaultContent = require('./defaultContent');
 
-const dbDir = __dirname;
-if (!fs.existsSync(dbDir)) fs.mkdirSync(dbDir, { recursive: true });
+let dbFilePath = path.join(__dirname, 'portfolio.json');
+try {
+  fs.accessSync(__dirname, fs.constants.W_OK);
+} catch (e) {
+  const tmpPath = path.join('/tmp', 'portfolio.json');
+  if (!fs.existsSync(tmpPath) && fs.existsSync(dbFilePath)) {
+    try { fs.copyFileSync(dbFilePath, tmpPath); } catch (_) {}
+  }
+  dbFilePath = tmpPath;
+}
 
-const adapter = new FileSync(path.join(dbDir, 'portfolio.json'));
+const adapter = new FileSync(dbFilePath);
 const db      = low(adapter);
+
+const originalWrite = db.write.bind(db);
+db.write = function() {
+  try {
+    return originalWrite();
+  } catch (err) {
+    console.warn('⚠️ [LowDB] Write failed (read-only environment):', err.message);
+    return db.getState();
+  }
+};
 
 db.defaults({
   appointments: [],
@@ -47,5 +65,5 @@ function nextId(col) {
   return validIds.length === 0 ? 1 : Math.max(...validIds) + 1;
 }
 
-console.log('✅ Database ready →', path.join(dbDir, 'portfolio.json'));
+console.log('✅ Database ready →', dbFilePath);
 module.exports = { db, nextId };
