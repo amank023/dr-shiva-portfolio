@@ -37,9 +37,11 @@ export default function AdminDashboard({ onLogout, onBackToSite }) {
   const fetchStats = async () => {
     try {
       const { data } = await getAdminStats()
-      setStats(data)
-    } catch {
-      // ignore
+      if (data && typeof data === 'object') {
+        setStats(data)
+      }
+    } catch (err) {
+      console.warn('[AdminDashboard] Stats fetch issue:', err.message)
     }
   }
 

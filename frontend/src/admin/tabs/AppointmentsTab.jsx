@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { getAppointments, updateAppointment, deleteAppointment, createAppointment } from '../../hooks/api'
-import { Search, Plus, Trash2, CheckCircle, XCircle, Clock, Check, MessageSquare, ExternalLink, Filter, Calendar } from 'lucide-react'
+import { Search, Plus, Trash2, CheckCircle, XCircle, Clock, Check, MessageSquare, ExternalLink, Filter, Calendar, RefreshCw, AlertCircle } from 'lucide-react'
 import toast from 'react-hot-toast'
 
 const SLOTS = ['09:00 AM','09:30 AM','10:00 AM','10:30 AM','11:00 AM','11:30 AM','02:00 PM','02:30 PM','03:00 PM','04:00 PM','04:30 PM','05:00 PM']
@@ -8,6 +8,7 @@ const SLOTS = ['09:00 AM','09:30 AM','10:00 AM','10:30 AM','11:00 AM','11:30 AM'
 export default function AppointmentsTab() {
   const [appointments, setAppointments] = useState([])
   const [loading, setLoading]           = useState(true)
+  const [loadError, setLoadError]       = useState(null)
   const [search, setSearch]             = useState('')
   const [filterStatus, setFilterStatus] = useState('all')
   const [selectedApt, setSelectedApt]   = useState(null)
@@ -20,10 +21,14 @@ export default function AppointmentsTab() {
   const loadData = async () => {
     try {
       setLoading(true)
+      setLoadError(null)
       const { data } = await getAppointments()
       setAppointments(Array.isArray(data) ? data : [])
-    } catch {
-      toast.error('Failed to load appointments')
+    } catch (err) {
+      console.error('[AppointmentsTab] Error loading appointments:', err)
+      const msg = err.response?.data?.error || err.message || 'Failed to load appointments'
+      setLoadError(msg)
+      toast.error(`Appointments: ${msg}`)
     } finally {
       setLoading(false)
     }
@@ -148,6 +153,17 @@ export default function AppointmentsTab() {
         {loading ? (
           <div className="flex justify-center items-center py-16 text-sky-500">
             <span className="w-8 h-8 border-4 border-sky-100 border-t-sky-500 rounded-full animate-spin" />
+          </div>
+        ) : loadError && appointments.length === 0 ? (
+          <div className="text-center py-12 px-4">
+            <AlertCircle className="w-8 h-8 text-rose-500 mx-auto mb-2" />
+            <p className="text-xs text-rose-600 dark:text-rose-400 font-medium mb-3">{loadError}</p>
+            <button
+              onClick={loadData}
+              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-sky-500 hover:bg-sky-600 text-white text-xs font-semibold shadow-sm transition-all"
+            >
+              <RefreshCw size={13} /> Retry Loading
+            </button>
           </div>
         ) : filtered.length === 0 ? (
           <div className="text-center py-16 text-gray-400 text-xs">

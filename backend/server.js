@@ -6,10 +6,16 @@ const app     = express();
 app.use(cors({ origin: true, credentials: true }));
 app.use(express.json());
 
-// Request logger for debugging
+// Request logger with duration and status code
 app.use((req, res, next) => {
   if (req.url.startsWith('/api')) {
-    console.log(`[API] ${req.method} ${req.url}`);
+    const start = Date.now();
+    res.on('finish', () => {
+      const ms = Date.now() - start;
+      const status = res.statusCode;
+      const icon = status < 400 ? '✅' : '❌';
+      console.log(`[API] ${icon} ${req.method} ${req.url} -> ${status} (${ms}ms)`);
+    });
   }
   next();
 });
@@ -31,8 +37,11 @@ app.get('/api/health', (req, res) => res.json({
   database: isFirebaseConfigured() ? 'Firebase Firestore (Cloud)' : 'Local LowDB (File)'
 }));
 
-app.use((req, res) => res.status(404).json({ error: 'Not found' }));
-app.use((err, req, res, next) => res.status(500).json({ error: err.message }));
+app.use((req, res) => res.status(404).json({ error: 'Endpoint not found' }));
+app.use((err, req, res, next) => {
+  console.error('[API Server Error]', err);
+  res.status(500).json({ error: err.message || 'Internal Server Error' });
+});
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, '0.0.0.0', () => {

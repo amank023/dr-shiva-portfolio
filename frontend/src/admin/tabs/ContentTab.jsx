@@ -1,11 +1,12 @@
 import { useState, useEffect, useRef } from 'react'
 import { getContent, updateContent, resetContent } from '../../hooks/api'
-import { Save, RotateCcw, Plus, Trash2, Edit2, User, Briefcase, GraduationCap, Award, Wrench, Check, Upload, Image as ImageIcon } from 'lucide-react'
+import { Save, RotateCcw, Plus, Trash2, Edit2, User, Briefcase, GraduationCap, Award, Wrench, Check, Upload, Image as ImageIcon, RefreshCw, AlertCircle } from 'lucide-react'
 import toast from 'react-hot-toast'
 
 export default function ContentTab({ onContentUpdated }) {
   const [content, setContent]     = useState(null)
   const [loading, setLoading]     = useState(true)
+  const [loadError, setLoadError] = useState(null)
   const [saving, setSaving]       = useState(false)
   const [activeSub, setActiveSub] = useState('profile') // profile, experience, education, skills, achievements
   const fileInputRef              = useRef(null)
@@ -13,10 +14,18 @@ export default function ContentTab({ onContentUpdated }) {
   const loadData = async () => {
     try {
       setLoading(true)
+      setLoadError(null)
       const { data } = await getContent()
-      setContent(data)
-    } catch {
-      toast.error('Failed to load website content')
+      if (data && typeof data === 'object' && data.profile) {
+        setContent(data)
+      } else {
+        throw new Error('Invalid content format received from server')
+      }
+    } catch (err) {
+      console.error('[ContentTab] Error loading website content:', err)
+      const msg = err.response?.data?.error || err.message || 'Failed to load website content'
+      setLoadError(msg)
+      toast.error(`Site Content: ${msg}`)
     } finally {
       setLoading(false)
     }
@@ -225,10 +234,26 @@ export default function ContentTab({ onContentUpdated }) {
     }))
   }
 
-  if (loading || !content) {
+  if (loading) {
     return (
       <div className="flex justify-center items-center py-20 text-sky-500">
         <span className="w-8 h-8 border-4 border-sky-100 border-t-sky-500 rounded-full animate-spin" />
+      </div>
+    )
+  }
+
+  if (!content) {
+    return (
+      <div className="bg-white dark:bg-gray-900 border border-sky-100 dark:border-white/10 rounded-2xl p-12 text-center max-w-lg mx-auto my-12">
+        <AlertCircle className="w-10 h-10 text-rose-500 mx-auto mb-3" />
+        <h2 className="text-base font-bold text-gray-900 dark:text-white mb-1">Failed to load content</h2>
+        <p className="text-xs text-rose-600 dark:text-rose-400 mb-5">{loadError || 'Unable to retrieve website CMS content from backend.'}</p>
+        <button
+          onClick={loadData}
+          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-sky-500 hover:bg-sky-600 text-white text-xs font-semibold shadow-md shadow-sky-400/20 transition-all"
+        >
+          <RefreshCw size={14} /> Retry Loading Content
+        </button>
       </div>
     )
   }

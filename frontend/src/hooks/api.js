@@ -1,6 +1,78 @@
 import axios from 'axios'
 
-const api = axios.create({ baseURL: import.meta.env.VITE_API_BASE_URL || '/api' })
+const getBaseUrl = () => {
+  if (import.meta.env.VITE_API_BASE_URL) return import.meta.env.VITE_API_BASE_URL
+  return '/api'
+}
+
+const api = axios.create({
+  baseURL: getBaseUrl(),
+  timeout: 15000,
+  headers: {
+    'Content-Type': 'application/json'
+  }
+})
+
+// Attach admin token if present in localStorage
+api.interceptors.request.use((config) => {
+  try {
+    const token = typeof window !== 'undefined' ? localStorage.getItem('dr_shiva_admin_token') : null
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`
+    }
+  } catch (_) {}
+  return config
+})
+
+// Response interceptor for fallback resilience and error diagnostics
+api.interceptors.response.use(
+  (response) => {
+    // If Vite proxy returned HTML index page instead of JSON API response
+    if (typeof response.data === 'string' && response.data.includes('<!DOCTYPE html>')) {
+      const err = new Error('Received HTML webpage instead of API JSON response')
+      err.response = response
+      return Promise.reject(err)
+    }
+    return response
+  },
+  async (error) => {
+    const originalRequest = error.config
+    if (!originalRequest || originalRequest._retry) {
+      return Promise.reject(error)
+    }
+
+    // Identify network or proxy gateway failure
+    const isNetworkOrProxyError =
+      !error.response ||
+      error.response.status === 502 ||
+      error.response.status === 503 ||
+      error.response.status === 504 ||
+      error.code === 'ERR_NETWORK' ||
+      error.code === 'ECONNABORTED'
+
+    if (isNetworkOrProxyError && typeof window !== 'undefined') {
+      originalRequest._retry = true
+      const host = window.location.hostname || 'localhost'
+      const fallbackUrl = `http://${host}:5000/api${originalRequest.url.startsWith('/') ? '' : '/'}${originalRequest.url}`
+      console.warn(`[API Proxy Fallback] Request failed via proxy, retrying direct backend endpoint: ${fallbackUrl}`)
+
+      try {
+        const directRes = await axios({
+          ...originalRequest,
+          url: fallbackUrl,
+          baseURL: '',
+          timeout: 10000
+        })
+        return directRes
+      } catch (retryErr) {
+        console.error('[API Proxy Fallback] Direct endpoint also failed:', retryErr.message)
+        return Promise.reject(retryErr)
+      }
+    }
+
+    return Promise.reject(error)
+  }
+)
 
 // Appointments
 export const getAppointments    = ()         => api.get('/appointments')
@@ -37,7 +109,6 @@ export const adminLogin = async (password) => {
     return await api.post('/auth/login', { password })
   } catch (err) {
     if (!err.response) {
-      // Fallback in case /auth/ is blocked by a browser extension
       return await api.post('/login', { password })
     }
     throw err

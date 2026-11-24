@@ -20,387 +20,489 @@ async function getNextFirestoreId(collectionName) {
   return ids.length === 0 ? 1 : Math.max(...ids) + 1;
 }
 
+// Resilient wrapper: tries Firestore first, gracefully falls back to Local LowDB on any error
+async function runWithFallback(fsFn, localFn, opName) {
+  if (isFirebaseConfigured()) {
+    try {
+      return await fsFn();
+    } catch (err) {
+      console.warn(`⚠️ [Firestore Fallback] ${opName} failed (${err.message}). Seamlessly serving from Local LowDB.`);
+    }
+  }
+  return await localFn();
+}
+
 // ─────────────────────────────────────────────────────────────
 // APPOINTMENTS
 // ─────────────────────────────────────────────────────────────
 async function getAppointments() {
-  if (isFirebaseConfigured()) {
-    const fs = getFirestore();
-    const snap = await fs.collection('appointments').get();
-    const list = snap.docs.map(doc => ({ ...doc.data(), _docId: doc.id }));
-    return list.sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
-  }
-  return db.get('appointments').sortBy('created_at').reverse().value() || [];
+  return runWithFallback(
+    async () => {
+      const fs = getFirestore();
+      const snap = await fs.collection('appointments').get();
+      const list = snap.docs.map(doc => ({ ...doc.data(), _docId: doc.id }));
+      return list.sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
+    },
+    async () => {
+      return db.get('appointments').sortBy('created_at').reverse().value() || [];
+    },
+    'getAppointments'
+  );
 }
 
 async function createAppointment(data) {
-  if (isFirebaseConfigured()) {
-    const fs = getFirestore();
-    const id = await getNextFirestoreId('appointments');
-    const apt_id = `APT-${String(id).padStart(6, '0')}`;
-    const record = {
-      id,
-      apt_id,
-      name: data.name,
-      phone: data.phone,
-      age: data.age || '',
-      gender: data.gender || '',
-      reason: data.reason || '',
-      type: data.type || 'In-Person',
-      date: data.date,
-      alt_date: data.alt_date || '',
-      time_slot: data.time_slot,
-      status: 'pending',
-      source: data.source || 'website',
-      meet_link: data.meet_link || '',
-      created_at: new Date().toISOString()
-    };
-    await fs.collection('appointments').doc(apt_id).set(record);
-    return record;
-  }
-
-  const id = nextId('appointments');
-  const apt_id = `APT-${String(id).padStart(6, '0')}`;
-  const record = {
-    id,
-    apt_id,
-    name: data.name,
-    phone: data.phone,
-    age: data.age || '',
-    gender: data.gender || '',
-    reason: data.reason || '',
-    type: data.type || 'In-Person',
-    date: data.date,
-    alt_date: data.alt_date || '',
-    time_slot: data.time_slot,
-    status: 'pending',
-    source: data.source || 'website',
-    meet_link: data.meet_link || '',
-    created_at: new Date().toISOString()
-  };
-  db.get('appointments').push(record).write();
-  return record;
+  return runWithFallback(
+    async () => {
+      const fs = getFirestore();
+      const id = await getNextFirestoreId('appointments');
+      const apt_id = `APT-${String(id).padStart(6, '0')}`;
+      const record = {
+        id,
+        apt_id,
+        name: data.name,
+        phone: data.phone,
+        age: data.age || '',
+        gender: data.gender || '',
+        reason: data.reason || '',
+        type: data.type || 'In-Person',
+        date: data.date,
+        alt_date: data.alt_date || '',
+        time_slot: data.time_slot,
+        status: 'pending',
+        source: data.source || 'website',
+        meet_link: data.meet_link || '',
+        created_at: new Date().toISOString()
+      };
+      await fs.collection('appointments').doc(apt_id).set(record);
+      try { db.get('appointments').push(record).write(); } catch (_) {}
+      return record;
+    },
+    async () => {
+      const id = nextId('appointments');
+      const apt_id = `APT-${String(id).padStart(6, '0')}`;
+      const record = {
+        id,
+        apt_id,
+        name: data.name,
+        phone: data.phone,
+        age: data.age || '',
+        gender: data.gender || '',
+        reason: data.reason || '',
+        type: data.type || 'In-Person',
+        date: data.date,
+        alt_date: data.alt_date || '',
+        time_slot: data.time_slot,
+        status: 'pending',
+        source: data.source || 'website',
+        meet_link: data.meet_link || '',
+        created_at: new Date().toISOString()
+      };
+      db.get('appointments').push(record).write();
+      return record;
+    },
+    'createAppointment'
+  );
 }
 
 async function updateAppointment(id, updates) {
-  if (isFirebaseConfigured()) {
-    const fs = getFirestore();
-    // Query by id (number) or apt_id (string)
-    let docRef = null;
-    if (typeof id === 'string' && id.startsWith('APT-')) {
-      docRef = fs.collection('appointments').doc(id);
-    } else {
-      const snap = await fs.collection('appointments').where('id', '==', Number(id)).limit(1).get();
-      if (!snap.empty) docRef = snap.docs[0].ref;
-    }
-
-    if (!docRef) return null;
-    const existingSnap = await docRef.get();
-    if (!existingSnap.exists) return null;
-
-    await docRef.set(updates, { merge: true });
-    const updatedSnap = await docRef.get();
-    return updatedSnap.data();
-  }
-
-  const numId = Number(id);
-  const existing = db.get('appointments').find(a => a.id === numId || a.apt_id === id).value();
-  if (!existing) return null;
-
-  db.get('appointments')
-    .find(a => a.id === numId || a.apt_id === id)
-    .assign(updates)
-    .write();
-
-  return db.get('appointments').find(a => a.id === numId || a.apt_id === id).value();
+  return runWithFallback(
+    async () => {
+      const fs = getFirestore();
+      let docRef = null;
+      if (typeof id === 'string' && id.startsWith('APT-')) {
+        docRef = fs.collection('appointments').doc(id);
+      } else {
+        const snap = await fs.collection('appointments').where('id', '==', Number(id)).limit(1).get();
+        if (!snap.empty) docRef = snap.docs[0].ref;
+      }
+      if (!docRef) return null;
+      const existingSnap = await docRef.get();
+      if (!existingSnap.exists) return null;
+      await docRef.set(updates, { merge: true });
+      const updatedSnap = await docRef.get();
+      try {
+        const numId = Number(id);
+        db.get('appointments').find(a => a.id === numId || a.apt_id === id).assign(updates).write();
+      } catch (_) {}
+      return updatedSnap.data();
+    },
+    async () => {
+      const numId = Number(id);
+      const existing = db.get('appointments').find(a => a.id === numId || a.apt_id === id).value();
+      if (!existing) return null;
+      db.get('appointments').find(a => a.id === numId || a.apt_id === id).assign(updates).write();
+      return db.get('appointments').find(a => a.id === numId || a.apt_id === id).value();
+    },
+    'updateAppointment'
+  );
 }
 
 async function deleteAppointment(id) {
-  if (isFirebaseConfigured()) {
-    const fs = getFirestore();
-    let docRef = null;
-    if (typeof id === 'string' && id.startsWith('APT-')) {
-      docRef = fs.collection('appointments').doc(id);
-    } else {
-      const snap = await fs.collection('appointments').where('id', '==', Number(id)).limit(1).get();
-      if (!snap.empty) docRef = snap.docs[0].ref;
-    }
-    if (docRef) await docRef.delete();
-    return true;
-  }
-  const numId = Number(id);
-  db.get('appointments').remove(a => a.id === numId || a.apt_id === id).write();
-  return true;
+  return runWithFallback(
+    async () => {
+      const fs = getFirestore();
+      let docRef = null;
+      if (typeof id === 'string' && id.startsWith('APT-')) {
+        docRef = fs.collection('appointments').doc(id);
+      } else {
+        const snap = await fs.collection('appointments').where('id', '==', Number(id)).limit(1).get();
+        if (!snap.empty) docRef = snap.docs[0].ref;
+      }
+      if (docRef) await docRef.delete();
+      try {
+        const numId = Number(id);
+        db.get('appointments').remove(a => a.id === numId || a.apt_id === id).write();
+      } catch (_) {}
+      return true;
+    },
+    async () => {
+      const numId = Number(id);
+      db.get('appointments').remove(a => a.id === numId || a.apt_id === id).write();
+      return true;
+    },
+    'deleteAppointment'
+  );
 }
 
 // ─────────────────────────────────────────────────────────────
 // REVIEWS
 // ─────────────────────────────────────────────────────────────
 async function getReviews() {
-  if (isFirebaseConfigured()) {
-    const fs = getFirestore();
-    const snap = await fs.collection('reviews').get();
-    if (snap.empty) {
-      // Seed default reviews in Firestore if collection is empty
-      const batch = fs.batch();
-      for (const rev of DEFAULT_REVIEWS) {
-        const ref = fs.collection('reviews').doc(`rev_${rev.id}`);
-        batch.set(ref, rev);
+  return runWithFallback(
+    async () => {
+      const fs = getFirestore();
+      const snap = await fs.collection('reviews').get();
+      if (snap.empty) {
+        const batch = fs.batch();
+        for (const rev of DEFAULT_REVIEWS) {
+          const ref = fs.collection('reviews').doc(`rev_${rev.id}`);
+          batch.set(ref, rev);
+        }
+        await batch.commit();
+        return [...DEFAULT_REVIEWS].sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
       }
-      await batch.commit();
-      return [...DEFAULT_REVIEWS].sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
-    }
-    const list = snap.docs.map(doc => doc.data());
-    return list.sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
-  }
-
-  let reviews = db.get('reviews').value();
-  if (!Array.isArray(reviews) || reviews.length === 0) {
-    db.set('reviews', DEFAULT_REVIEWS).write();
-    reviews = DEFAULT_REVIEWS;
-  }
-  return [...reviews].sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
+      const list = snap.docs.map(doc => doc.data());
+      return list.sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
+    },
+    async () => {
+      let reviews = db.get('reviews').value();
+      if (!Array.isArray(reviews) || reviews.length === 0) {
+        db.set('reviews', DEFAULT_REVIEWS).write();
+        reviews = DEFAULT_REVIEWS;
+      }
+      return [...reviews].sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
+    },
+    'getReviews'
+  );
 }
 
 async function createReview(data) {
   const colors = ['#2e75b6', '#1e5f9e', '#5b9bd5', '#128C7E', '#c8a84b', '#e87040'];
   const color = data.color || colors[Math.floor(Math.random() * colors.length)];
 
-  if (isFirebaseConfigured()) {
-    const fs = getFirestore();
-    const id = await getNextFirestoreId('reviews');
-    const record = {
-      id,
-      name: data.name,
-      relation: data.relation || 'Patient',
-      rating: parseInt(data.rating),
-      text: data.text,
-      color,
-      verified: 1,
-      created_at: new Date().toISOString()
-    };
-    await fs.collection('reviews').doc(`rev_${id}`).set(record);
-    return record;
-  }
-
-  const id = nextId('reviews');
-  const record = {
-    id,
-    name: data.name,
-    relation: data.relation || 'Patient',
-    rating: parseInt(data.rating),
-    text: data.text,
-    color,
-    verified: 1,
-    created_at: new Date().toISOString()
-  };
-  db.get('reviews').push(record).write();
-  return record;
+  return runWithFallback(
+    async () => {
+      const fs = getFirestore();
+      const id = await getNextFirestoreId('reviews');
+      const record = {
+        id,
+        name: data.name,
+        relation: data.relation || 'Patient',
+        rating: parseInt(data.rating),
+        text: data.text,
+        color,
+        verified: 1,
+        created_at: new Date().toISOString()
+      };
+      await fs.collection('reviews').doc(`rev_${id}`).set(record);
+      try { db.get('reviews').push(record).write(); } catch (_) {}
+      return record;
+    },
+    async () => {
+      const id = nextId('reviews');
+      const record = {
+        id,
+        name: data.name,
+        relation: data.relation || 'Patient',
+        rating: parseInt(data.rating),
+        text: data.text,
+        color,
+        verified: 1,
+        created_at: new Date().toISOString()
+      };
+      db.get('reviews').push(record).write();
+      return record;
+    },
+    'createReview'
+  );
 }
 
 async function updateReview(id, updates) {
   const numId = Number(id);
-  if (isFirebaseConfigured()) {
-    const fs = getFirestore();
-    const docRef = fs.collection('reviews').doc(`rev_${numId}`);
-    const snap = await docRef.get();
-    if (!snap.exists) return null;
-    await docRef.set(updates, { merge: true });
-    const updated = await docRef.get();
-    return updated.data();
-  }
-
-  const existing = db.get('reviews').find({ id: numId }).value();
-  if (!existing) return null;
-  db.get('reviews').find({ id: numId }).assign(updates).write();
-  return db.get('reviews').find({ id: numId }).value();
+  return runWithFallback(
+    async () => {
+      const fs = getFirestore();
+      const docRef = fs.collection('reviews').doc(`rev_${numId}`);
+      const snap = await docRef.get();
+      if (!snap.exists) return null;
+      await docRef.set(updates, { merge: true });
+      const updated = await docRef.get();
+      try { db.get('reviews').find({ id: numId }).assign(updates).write(); } catch (_) {}
+      return updated.data();
+    },
+    async () => {
+      const existing = db.get('reviews').find({ id: numId }).value();
+      if (!existing) return null;
+      db.get('reviews').find({ id: numId }).assign(updates).write();
+      return db.get('reviews').find({ id: numId }).value();
+    },
+    'updateReview'
+  );
 }
 
 async function deleteReview(id) {
   const numId = Number(id);
-  if (isFirebaseConfigured()) {
-    const fs = getFirestore();
-    await fs.collection('reviews').doc(`rev_${numId}`).delete();
-    return true;
-  }
-  db.get('reviews').remove({ id: numId }).write();
-  return true;
+  return runWithFallback(
+    async () => {
+      const fs = getFirestore();
+      await fs.collection('reviews').doc(`rev_${numId}`).delete();
+      try { db.get('reviews').remove({ id: numId }).write(); } catch (_) {}
+      return true;
+    },
+    async () => {
+      db.get('reviews').remove({ id: numId }).write();
+      return true;
+    },
+    'deleteReview'
+  );
 }
 
 async function resetReviews() {
-  if (isFirebaseConfigured()) {
-    const fs = getFirestore();
-    const snap = await fs.collection('reviews').get();
-    const batch = fs.batch();
-    snap.docs.forEach(d => batch.delete(d.ref));
-    DEFAULT_REVIEWS.forEach(rev => {
-      const ref = fs.collection('reviews').doc(`rev_${rev.id}`);
-      batch.set(ref, rev);
-    });
-    await batch.commit();
-    return DEFAULT_REVIEWS;
-  }
-
-  db.set('reviews', DEFAULT_REVIEWS).write();
-  return DEFAULT_REVIEWS;
+  return runWithFallback(
+    async () => {
+      const fs = getFirestore();
+      const snap = await fs.collection('reviews').get();
+      const batch = fs.batch();
+      snap.docs.forEach(d => batch.delete(d.ref));
+      DEFAULT_REVIEWS.forEach(rev => {
+        const ref = fs.collection('reviews').doc(`rev_${rev.id}`);
+        batch.set(ref, rev);
+      });
+      await batch.commit();
+      try { db.set('reviews', DEFAULT_REVIEWS).write(); } catch (_) {}
+      return DEFAULT_REVIEWS;
+    },
+    async () => {
+      db.set('reviews', DEFAULT_REVIEWS).write();
+      return DEFAULT_REVIEWS;
+    },
+    'resetReviews'
+  );
 }
 
 // ─────────────────────────────────────────────────────────────
 // MESSAGES
 // ─────────────────────────────────────────────────────────────
 async function getMessages() {
-  if (isFirebaseConfigured()) {
-    const fs = getFirestore();
-    const snap = await fs.collection('messages').get();
-    const list = snap.docs.map(doc => doc.data());
-    return list.sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
-  }
-  return db.get('messages').sortBy('created_at').reverse().value() || [];
+  return runWithFallback(
+    async () => {
+      const fs = getFirestore();
+      const snap = await fs.collection('messages').get();
+      const list = snap.docs.map(doc => doc.data());
+      return list.sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
+    },
+    async () => {
+      return db.get('messages').sortBy('created_at').reverse().value() || [];
+    },
+    'getMessages'
+  );
 }
 
 async function createMessage(data) {
-  if (isFirebaseConfigured()) {
-    const fs = getFirestore();
-    const id = await getNextFirestoreId('messages');
-    const record = {
-      id,
-      name: data.name,
-      email: data.email,
-      subject: data.subject,
-      message: data.message,
-      read: 0,
-      created_at: new Date().toISOString()
-    };
-    await fs.collection('messages').doc(`msg_${id}`).set(record);
-    return record;
-  }
-
-  const id = nextId('messages');
-  const record = {
-    id,
-    name: data.name,
-    email: data.email,
-    subject: data.subject,
-    message: data.message,
-    read: 0,
-    created_at: new Date().toISOString()
-  };
-  db.get('messages').push(record).write();
-  return record;
+  return runWithFallback(
+    async () => {
+      const fs = getFirestore();
+      const id = await getNextFirestoreId('messages');
+      const record = {
+        id,
+        name: data.name,
+        email: data.email,
+        subject: data.subject,
+        message: data.message,
+        read: 0,
+        created_at: new Date().toISOString()
+      };
+      await fs.collection('messages').doc(`msg_${id}`).set(record);
+      try { db.get('messages').push(record).write(); } catch (_) {}
+      return record;
+    },
+    async () => {
+      const id = nextId('messages');
+      const record = {
+        id,
+        name: data.name,
+        email: data.email,
+        subject: data.subject,
+        message: data.message,
+        read: 0,
+        created_at: new Date().toISOString()
+      };
+      db.get('messages').push(record).write();
+      return record;
+    },
+    'createMessage'
+  );
 }
 
 async function updateMessage(id, updates) {
   const numId = Number(id);
-  if (isFirebaseConfigured()) {
-    const fs = getFirestore();
-    const docRef = fs.collection('messages').doc(`msg_${numId}`);
-    const snap = await docRef.get();
-    if (!snap.exists) return null;
-    await docRef.set(updates, { merge: true });
-    const updated = await docRef.get();
-    return updated.data();
-  }
-
-  const existing = db.get('messages').find({ id: numId }).value();
-  if (!existing) return null;
-  db.get('messages').find({ id: numId }).assign(updates).write();
-  return db.get('messages').find({ id: numId }).value();
+  return runWithFallback(
+    async () => {
+      const fs = getFirestore();
+      const docRef = fs.collection('messages').doc(`msg_${numId}`);
+      const snap = await docRef.get();
+      if (!snap.exists) return null;
+      await docRef.set(updates, { merge: true });
+      const updated = await docRef.get();
+      try { db.get('messages').find({ id: numId }).assign(updates).write(); } catch (_) {}
+      return updated.data();
+    },
+    async () => {
+      const existing = db.get('messages').find({ id: numId }).value();
+      if (!existing) return null;
+      db.get('messages').find({ id: numId }).assign(updates).write();
+      return db.get('messages').find({ id: numId }).value();
+    },
+    'updateMessage'
+  );
 }
 
 async function deleteMessage(id) {
   const numId = Number(id);
-  if (isFirebaseConfigured()) {
-    const fs = getFirestore();
-    await fs.collection('messages').doc(`msg_${numId}`).delete();
-    return true;
-  }
-  db.get('messages').remove({ id: numId }).write();
-  return true;
+  return runWithFallback(
+    async () => {
+      const fs = getFirestore();
+      await fs.collection('messages').doc(`msg_${numId}`).delete();
+      try { db.get('messages').remove({ id: numId }).write(); } catch (_) {}
+      return true;
+    },
+    async () => {
+      db.get('messages').remove({ id: numId }).write();
+      return true;
+    },
+    'deleteMessage'
+  );
 }
 
 // ─────────────────────────────────────────────────────────────
 // CHAT LOGS
 // ─────────────────────────────────────────────────────────────
 async function getChatLogs() {
-  if (isFirebaseConfigured()) {
-    const fs = getFirestore();
-    const snap = await fs.collection('chat_logs').get();
-    const list = snap.docs.map(doc => doc.data());
-    return list.sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
-  }
-  return db.get('chat_logs').sortBy('created_at').reverse().value() || [];
+  return runWithFallback(
+    async () => {
+      const fs = getFirestore();
+      const snap = await fs.collection('chat_logs').get();
+      const list = snap.docs.map(doc => doc.data());
+      return list.sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
+    },
+    async () => {
+      return db.get('chat_logs').sortBy('created_at').reverse().value() || [];
+    },
+    'getChatLogs'
+  );
 }
 
 async function createChatLog(data) {
-  if (isFirebaseConfigured()) {
-    const fs = getFirestore();
-    const id = await getNextFirestoreId('chat_logs');
-    const record = {
-      id,
-      message: data.message || '',
-      state: data.state || '',
-      created_at: new Date().toISOString()
-    };
-    await fs.collection('chat_logs').doc(`chat_${id}`).set(record);
-    return record;
-  }
-
-  const id = nextId('chat_logs');
-  const record = {
-    id,
-    message: data.message || '',
-    state: data.state || '',
-    created_at: new Date().toISOString()
-  };
-  db.get('chat_logs').push(record).write();
-  return record;
+  return runWithFallback(
+    async () => {
+      const fs = getFirestore();
+      const id = await getNextFirestoreId('chat_logs');
+      const record = {
+        id,
+        message: data.message || '',
+        state: data.state || '',
+        created_at: new Date().toISOString()
+      };
+      await fs.collection('chat_logs').doc(`chat_${id}`).set(record);
+      try { db.get('chat_logs').push(record).write(); } catch (_) {}
+      return record;
+    },
+    async () => {
+      const id = nextId('chat_logs');
+      const record = {
+        id,
+        message: data.message || '',
+        state: data.state || '',
+        created_at: new Date().toISOString()
+      };
+      db.get('chat_logs').push(record).write();
+      return record;
+    },
+    'createChatLog'
+  );
 }
 
 async function deleteChatLog(id) {
   const numId = Number(id);
-  if (isFirebaseConfigured()) {
-    const fs = getFirestore();
-    await fs.collection('chat_logs').doc(`chat_${numId}`).delete();
-    return true;
-  }
-  db.get('chat_logs').remove({ id: numId }).write();
-  return true;
+  return runWithFallback(
+    async () => {
+      const fs = getFirestore();
+      await fs.collection('chat_logs').doc(`chat_${numId}`).delete();
+      try { db.get('chat_logs').remove({ id: numId }).write(); } catch (_) {}
+      return true;
+    },
+    async () => {
+      db.get('chat_logs').remove({ id: numId }).write();
+      return true;
+    },
+    'deleteChatLog'
+  );
 }
 
 async function clearChatLogs() {
-  if (isFirebaseConfigured()) {
-    const fs = getFirestore();
-    const snap = await fs.collection('chat_logs').get();
-    const batch = fs.batch();
-    snap.docs.forEach(d => batch.delete(d.ref));
-    await batch.commit();
-    return true;
-  }
-  db.set('chat_logs', []).write();
-  return true;
+  return runWithFallback(
+    async () => {
+      const fs = getFirestore();
+      const snap = await fs.collection('chat_logs').get();
+      const batch = fs.batch();
+      snap.docs.forEach(d => batch.delete(d.ref));
+      await batch.commit();
+      try { db.set('chat_logs', []).write(); } catch (_) {}
+      return true;
+    },
+    async () => {
+      db.set('chat_logs', []).write();
+      return true;
+    },
+    'clearChatLogs'
+  );
 }
 
 // ─────────────────────────────────────────────────────────────
 // SITE CONTENT & CMS
 // ─────────────────────────────────────────────────────────────
 async function getContent() {
-  if (isFirebaseConfigured()) {
-    const fs = getFirestore();
-    const docRef = fs.collection('settings').doc('content');
-    const snap = await docRef.get();
-    if (!snap.exists) {
-      await docRef.set(defaultContent);
-      return defaultContent;
-    }
-    return snap.data();
-  }
-
-  let content = db.get('content').value();
-  if (!content) {
-    db.set('content', defaultContent).write();
-    content = defaultContent;
-  }
-  return content;
+  return runWithFallback(
+    async () => {
+      const fs = getFirestore();
+      const docRef = fs.collection('settings').doc('content');
+      const snap = await docRef.get();
+      if (!snap.exists) {
+        await docRef.set(defaultContent);
+        return defaultContent;
+      }
+      return snap.data();
+    },
+    async () => {
+      let content = db.get('content').value();
+      if (!content) {
+        db.set('content', defaultContent).write();
+        content = defaultContent;
+      }
+      return content;
+    },
+    'getContent'
+  );
 }
 
 async function updateContent(newContent) {
@@ -413,25 +515,35 @@ async function updateContent(newContent) {
     achievements: newContent.achievements || current.achievements
   };
 
-  if (isFirebaseConfigured()) {
-    const fs = getFirestore();
-    await fs.collection('settings').doc('content').set(updated);
-    return updated;
-  }
-
-  db.set('content', updated).write();
-  return updated;
+  return runWithFallback(
+    async () => {
+      const fs = getFirestore();
+      await fs.collection('settings').doc('content').set(updated);
+      try { db.set('content', updated).write(); } catch (_) {}
+      return updated;
+    },
+    async () => {
+      db.set('content', updated).write();
+      return updated;
+    },
+    'updateContent'
+  );
 }
 
 async function resetContent() {
-  if (isFirebaseConfigured()) {
-    const fs = getFirestore();
-    await fs.collection('settings').doc('content').set(defaultContent);
-    return defaultContent;
-  }
-
-  db.set('content', defaultContent).write();
-  return defaultContent;
+  return runWithFallback(
+    async () => {
+      const fs = getFirestore();
+      await fs.collection('settings').doc('content').set(defaultContent);
+      try { db.set('content', defaultContent).write(); } catch (_) {}
+      return defaultContent;
+    },
+    async () => {
+      db.set('content', defaultContent).write();
+      return defaultContent;
+    },
+    'resetContent'
+  );
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -439,71 +551,98 @@ async function resetContent() {
 // ─────────────────────────────────────────────────────────────
 async function getAdminPassword() {
   const defaultPass = process.env.ADMIN_PASSWORD || 'admin123';
-  if (isFirebaseConfigured()) {
-    const fs = getFirestore();
-    const docRef = fs.collection('settings').doc('admin');
-    const snap = await docRef.get();
-    if (!snap.exists) {
-      await docRef.set({ password: defaultPass });
-      return defaultPass;
-    }
-    return snap.data().password || defaultPass;
-  }
-
-  const settings = db.get('admin_settings').value();
-  return settings?.password || defaultPass;
+  return runWithFallback(
+    async () => {
+      const fs = getFirestore();
+      const docRef = fs.collection('settings').doc('admin');
+      const snap = await docRef.get();
+      if (!snap.exists) {
+        await docRef.set({ password: defaultPass });
+        return defaultPass;
+      }
+      return snap.data().password || defaultPass;
+    },
+    async () => {
+      const settings = db.get('admin_settings').value();
+      return settings?.password || defaultPass;
+    },
+    'getAdminPassword'
+  );
 }
 
 async function updateAdminPassword(newPassword) {
-  if (isFirebaseConfigured()) {
-    const fs = getFirestore();
-    await fs.collection('settings').doc('admin').set({ password: newPassword }, { merge: true });
-    return true;
-  }
-
-  db.set('admin_settings', { password: newPassword }).write();
-  return true;
+  return runWithFallback(
+    async () => {
+      const fs = getFirestore();
+      await fs.collection('settings').doc('admin').set({ password: newPassword }, { merge: true });
+      try { db.set('admin_settings', { password: newPassword }).write(); } catch (_) {}
+      return true;
+    },
+    async () => {
+      db.set('admin_settings', { password: newPassword }).write();
+      return true;
+    },
+    'updateAdminPassword'
+  );
 }
 
 // ─────────────────────────────────────────────────────────────
 // DASHBOARD STATS
 // ─────────────────────────────────────────────────────────────
 async function getStats() {
-  const [appointments, reviews, messages, chatLogs] = await Promise.all([
-    getAppointments(),
-    getReviews(),
-    getMessages(),
-    getChatLogs()
-  ]);
+  let appointments = [];
+  let reviews = [];
+  let messages = [];
+  let chatLogs = [];
 
-  const pendingApts   = appointments.filter(a => a.status === 'pending').length;
-  const confirmedApts = appointments.filter(a => a.status === 'confirmed').length;
-  const completedApts = appointments.filter(a => a.status === 'completed').length;
-  const cancelledApts = appointments.filter(a => a.status === 'cancelled').length;
+  try {
+    [appointments, reviews, messages, chatLogs] = await Promise.all([
+      getAppointments(),
+      getReviews(),
+      getMessages(),
+      getChatLogs()
+    ]);
+  } catch (err) {
+    console.warn('⚠️ [Stats] Fallback to local store for stats calculation:', err.message);
+    appointments = db.get('appointments').value() || [];
+    reviews      = db.get('reviews').value() || [];
+    messages     = db.get('messages').value() || [];
+    chatLogs     = db.get('chat_logs').value() || [];
+  }
 
-  const unreadMessages = messages.filter(m => !m.read).length;
-  const avgRating = reviews.length
-    ? (reviews.reduce((sum, r) => sum + (Number(r.rating) || 0), 0) / reviews.length).toFixed(1)
+  const safeApts = Array.isArray(appointments) ? appointments : [];
+  const safeRevs = Array.isArray(reviews) ? reviews : [];
+  const safeMsgs = Array.isArray(messages) ? messages : [];
+  const safeLogs = Array.isArray(chatLogs) ? chatLogs : [];
+
+  const pendingApts   = safeApts.filter(a => a.status === 'pending').length;
+  const confirmedApts = safeApts.filter(a => a.status === 'confirmed').length;
+  const completedApts = safeApts.filter(a => a.status === 'completed').length;
+  const cancelledApts = safeApts.filter(a => a.status === 'cancelled').length;
+
+  const unreadMessages = safeMsgs.filter(m => !m.read).length;
+  const avgRating = safeRevs.length
+    ? (safeRevs.reduce((sum, r) => sum + (Number(r.rating) || 0), 0) / safeRevs.length).toFixed(1)
     : '5.0';
 
   return {
     engine: isFirebaseConfigured() ? 'firebase-firestore' : 'local-lowdb',
     counts: {
-      totalAppointments: appointments.length,
+      totalAppointments: safeApts.length,
       pendingAppointments: pendingApts,
       confirmedAppointments: confirmedApts,
       completedAppointments: completedApts,
       cancelledAppointments: cancelledApts,
-      totalReviews: reviews.length,
+      totalReviews: safeRevs.length,
       avgRating,
-      totalMessages: messages.length,
+      totalMessages: safeMsgs.length,
       unreadMessages,
-      totalChatLogs: chatLogs.length
+      totalChatLogs: safeLogs.length
     },
     recent: {
-      appointments: appointments.slice(0, 5),
-      messages: messages.slice(0, 5),
-      reviews: reviews.slice(0, 5)
+      appointments: safeApts.slice(0, 5),
+      messages: safeMsgs.slice(0, 5),
+      reviews: safeRevs.slice(0, 5)
     }
   };
 }

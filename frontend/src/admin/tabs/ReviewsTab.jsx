@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react'
 import { getReviews, createReview, updateReview, deleteReview } from '../../hooks/api'
-import { Star, Plus, Trash2, Edit2, ShieldCheck, ShieldAlert, Check, X, Search } from 'lucide-react'
+import { Star, Plus, Trash2, Edit2, ShieldCheck, ShieldAlert, Check, X, Search, RefreshCw, AlertCircle } from 'lucide-react'
 import toast from 'react-hot-toast'
 
 export default function ReviewsTab() {
   const [reviews, setReviews]       = useState([])
   const [loading, setLoading]       = useState(true)
+  const [loadError, setLoadError]   = useState(null)
   const [search, setSearch]         = useState('')
   const [editingReview, setEditing] = useState(null)
   const [modalAddOpen, setModalAdd] = useState(false)
@@ -14,10 +15,14 @@ export default function ReviewsTab() {
   const loadData = async () => {
     try {
       setLoading(true)
+      setLoadError(null)
       const { data } = await getReviews()
       setReviews(Array.isArray(data) ? data : [])
-    } catch {
-      toast.error('Failed to load reviews')
+    } catch (err) {
+      console.error('[ReviewsTab] Error loading reviews:', err)
+      const msg = err.response?.data?.error || err.message || 'Failed to load reviews'
+      setLoadError(msg)
+      toast.error(`Reviews: ${msg}`)
     } finally {
       setLoading(false)
     }
@@ -120,6 +125,17 @@ export default function ReviewsTab() {
       {loading ? (
         <div className="flex justify-center items-center py-16 text-sky-500">
           <span className="w-8 h-8 border-4 border-sky-100 border-t-sky-500 rounded-full animate-spin" />
+        </div>
+      ) : loadError && reviews.length === 0 ? (
+        <div className="text-center py-12 px-4 bg-white dark:bg-gray-900 border border-sky-100 dark:border-white/10 rounded-2xl">
+          <AlertCircle className="w-8 h-8 text-rose-500 mx-auto mb-2" />
+          <p className="text-xs text-rose-600 dark:text-rose-400 font-medium mb-3">{loadError}</p>
+          <button
+            onClick={loadData}
+            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-sky-500 hover:bg-sky-600 text-white text-xs font-semibold shadow-sm transition-all"
+          >
+            <RefreshCw size={13} /> Retry Loading
+          </button>
         </div>
       ) : filtered.length === 0 ? (
         <div className="text-center py-16 text-gray-400 text-xs bg-white dark:bg-gray-900 border border-sky-100 dark:border-white/10 rounded-2xl">

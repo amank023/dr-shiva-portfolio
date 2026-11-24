@@ -1,21 +1,26 @@
 import { useState, useEffect } from 'react'
 import { getMessages, updateMessage, deleteMessage } from '../../hooks/api'
-import { Mail, MailOpen, Trash2, Search, ExternalLink, CornerUpLeft } from 'lucide-react'
+import { Mail, MailOpen, Trash2, Search, ExternalLink, CornerUpLeft, RefreshCw, AlertCircle } from 'lucide-react'
 import toast from 'react-hot-toast'
 
 export default function MessagesTab() {
-  const [messages, setMessages] = useState([])
-  const [loading, setLoading]   = useState(true)
-  const [search, setSearch]     = useState('')
-  const [filter, setFilter]     = useState('all') // all, unread, read
+  const [messages, setMessages]   = useState([])
+  const [loading, setLoading]     = useState(true)
+  const [loadError, setLoadError] = useState(null)
+  const [search, setSearch]       = useState('')
+  const [filter, setFilter]       = useState('all') // all, unread, read
 
   const loadData = async () => {
     try {
       setLoading(true)
+      setLoadError(null)
       const { data } = await getMessages()
       setMessages(Array.isArray(data) ? data : [])
-    } catch {
-      toast.error('Failed to load messages')
+    } catch (err) {
+      console.error('[MessagesTab] Error loading messages:', err)
+      const msg = err.response?.data?.error || err.message || 'Failed to load messages'
+      setLoadError(msg)
+      toast.error(`Messages: ${msg}`)
     } finally {
       setLoading(false)
     }
@@ -102,6 +107,17 @@ export default function MessagesTab() {
       {loading ? (
         <div className="flex justify-center items-center py-16 text-sky-500">
           <span className="w-8 h-8 border-4 border-sky-100 border-t-sky-500 rounded-full animate-spin" />
+        </div>
+      ) : loadError && messages.length === 0 ? (
+        <div className="text-center py-12 px-4 bg-white dark:bg-gray-900 border border-sky-100 dark:border-white/10 rounded-2xl">
+          <AlertCircle className="w-8 h-8 text-rose-500 mx-auto mb-2" />
+          <p className="text-xs text-rose-600 dark:text-rose-400 font-medium mb-3">{loadError}</p>
+          <button
+            onClick={loadData}
+            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-sky-500 hover:bg-sky-600 text-white text-xs font-semibold shadow-sm transition-all"
+          >
+            <RefreshCw size={13} /> Retry Loading
+          </button>
         </div>
       ) : filtered.length === 0 ? (
         <div className="text-center py-16 text-gray-400 text-xs bg-white dark:bg-gray-900 border border-sky-100 dark:border-white/10 rounded-2xl">
