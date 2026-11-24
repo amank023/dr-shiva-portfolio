@@ -24,13 +24,16 @@ api.interceptors.request.use((config) => {
   return config
 })
 
-// Response interceptor for fallback resilience and error diagnostics
+// Response interceptor:
+// Automatically catches HTML page returns (when proxy misroutes to index.html), 404s, 502/503/504, or network drops
+// Retries directly against backend port 5000
 api.interceptors.response.use(
   (response) => {
-    // If Vite proxy returned HTML index page instead of JSON API response
+    // If proxy returned HTML SPA page instead of JSON API response
     if (typeof response.data === 'string' && response.data.includes('<!DOCTYPE html>')) {
       const err = new Error('Received HTML webpage instead of API JSON response')
       err.response = response
+      err.isHtmlResponse = true
       return Promise.reject(err)
     }
     return response
@@ -41,20 +44,29 @@ api.interceptors.response.use(
       return Promise.reject(error)
     }
 
-    // Identify network or proxy gateway failure
-    const isNetworkOrProxyError =
+    const status = error.response?.status
+    const isHtml = error.isHtmlResponse || (typeof error.response?.data === 'string' && error.response.data.includes('<!DOCTYPE html>'))
+
+    // Trigger retry if route had proxy 404, server gateway error, network disconnect, or HTML index fallback
+    const shouldRetry =
       !error.response ||
-      error.response.status === 502 ||
-      error.response.status === 503 ||
-      error.response.status === 504 ||
+      isHtml ||
+      status === 404 ||
+      status === 502 ||
+      status === 503 ||
+      status === 504 ||
       error.code === 'ERR_NETWORK' ||
       error.code === 'ECONNABORTED'
 
-    if (isNetworkOrProxyError && typeof window !== 'undefined') {
+    if (shouldRetry && typeof window !== 'undefined') {
       originalRequest._retry = true
       const host = window.location.hostname || 'localhost'
-      const fallbackUrl = `http://${host}:5000/api${originalRequest.url.startsWith('/') ? '' : '/'}${originalRequest.url}`
-      console.warn(`[API Proxy Fallback] Request failed via proxy, retrying direct backend endpoint: ${fallbackUrl}`)
+      // Strip any leading /api/ or / from url
+      const rawUrl = originalRequest.url || ''
+      const cleanPath = rawUrl.replace(/^\/?api\/?/, '').replace(/^\//, '')
+      const fallbackUrl = `http://${host}:5000/api/${cleanPath}`
+
+      console.warn(`[API Client Retry] Attempting direct backend connection: ${fallbackUrl}`)
 
       try {
         const directRes = await axios({
@@ -65,8 +77,18 @@ api.interceptors.response.use(
         })
         return directRes
       } catch (retryErr) {
-        console.error('[API Proxy Fallback] Direct endpoint also failed:', retryErr.message)
-        return Promise.reject(retryErr)
+        // Also try direct non-prefixed root route as secondary fallback
+        const secondaryFallback = `http://${host}:5000/${cleanPath}`
+        try {
+          return await axios({
+            ...originalRequest,
+            url: secondaryFallback,
+            baseURL: '',
+            timeout: 10000
+          })
+        } catch (_) {
+          return Promise.reject(retryErr)
+        }
       }
     }
 

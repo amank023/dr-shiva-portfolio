@@ -6,38 +6,57 @@ const app     = express();
 app.use(cors({ origin: true, credentials: true }));
 app.use(express.json());
 
-// Request logger with duration and status code
+// Request logger with duration, status code, and full original URL
 app.use((req, res, next) => {
-  if (req.url.startsWith('/api')) {
-    const start = Date.now();
-    res.on('finish', () => {
-      const ms = Date.now() - start;
-      const status = res.statusCode;
-      const icon = status < 400 ? '✅' : '❌';
-      console.log(`[API] ${icon} ${req.method} ${req.url} -> ${status} (${ms}ms)`);
-    });
-  }
+  const start = Date.now();
+  res.on('finish', () => {
+    const ms = Date.now() - start;
+    const status = res.statusCode;
+    const icon = status < 400 ? '✅' : '❌';
+    console.log(`[API] ${icon} ${req.method} ${req.originalUrl || req.url} -> ${status} (${ms}ms)`);
+  });
   next();
 });
 
-app.use('/api/appointments', require('./routes/appointments'));
-app.use('/api/reviews',      require('./routes/reviews'));
-app.use('/api/messages',     require('./routes/messages'));
-app.use('/api/chatlogs',     require('./routes/chatlogs'));
-app.use('/api/content',      require('./routes/content'));
-app.use('/api/auth',         require('./routes/auth'));
-app.use('/api/login',        require('./routes/auth'));
-app.use('/api/stats',        require('./routes/stats'));
+// Route handlers
+const appointmentsRoute = require('./routes/appointments');
+const reviewsRoute      = require('./routes/reviews');
+const messagesRoute     = require('./routes/messages');
+const chatlogsRoute     = require('./routes/chatlogs');
+const contentRoute      = require('./routes/content');
+const authRoute         = require('./routes/auth');
+const statsRoute        = require('./routes/stats');
+
+// Mount both prefixed (/api/...) and direct (/...) paths + aliases so no client request ever 404s
+app.use(['/api/appointments', '/appointments', '/api/appointment', '/appointment'], appointmentsRoute);
+app.use(['/api/reviews', '/reviews', '/api/review', '/review'], reviewsRoute);
+app.use(['/api/messages', '/messages', '/api/message', '/message'], messagesRoute);
+app.use([
+  '/api/chatlogs', '/chatlogs',
+  '/api/chat-logs', '/chat-logs',
+  '/api/chat_logs', '/chat_logs',
+  '/api/botlogs', '/botlogs',
+  '/api/bot-logs', '/bot-logs',
+  '/api/logs', '/logs'
+], chatlogsRoute);
+app.use(['/api/content', '/content'], contentRoute);
+app.use(['/api/auth', '/auth', '/api/login', '/login'], authRoute);
+app.use(['/api/stats', '/stats', '/api/admin/stats', '/admin/stats'], statsRoute);
 
 const { isFirebaseConfigured } = require('./db/firebase');
 
-app.get('/api/health', (req, res) => res.json({
+app.get(['/api/health', '/health'], (req, res) => res.json({
   status: 'ok',
   message: '🏥 API running',
   database: isFirebaseConfigured() ? 'Firebase Firestore (Cloud)' : 'Local LowDB (File)'
 }));
 
-app.use((req, res) => res.status(404).json({ error: 'Endpoint not found' }));
+// Fallback 404 with helpful diagnostic message
+app.use((req, res) => {
+  console.warn(`[API 404] Route not found: ${req.method} ${req.originalUrl || req.url}`);
+  res.status(404).json({ error: `Endpoint ${req.originalUrl || req.url} not found` });
+});
+
 app.use((err, req, res, next) => {
   console.error('[API Server Error]', err);
   res.status(500).json({ error: err.message || 'Internal Server Error' });

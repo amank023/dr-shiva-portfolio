@@ -11,6 +11,80 @@ const DEFAULT_REVIEWS = [
   { id: 5, name: 'Kavita Singh',     relation: "Patient's Family", rating: 4, text: "Very knowledgeable and experienced doctor. The treatment was excellent. The quality of care more than makes up for any wait.", color: '#c8a84b', verified: 1, created_at: new Date().toISOString() }
 ];
 
+// Default initial messages for seeding
+const DEFAULT_MESSAGES = [
+  {
+    id: 1,
+    name: 'Rajesh Malhotra',
+    email: 'rajesh.malhotra@gmail.com',
+    subject: 'Second Opinion on ICU Ventilation Plan',
+    message: 'Respected Dr. Shiva, my brother is currently admitted in hospital on ventilator support. We would like to request a second opinion consultation with you regarding his weaning plan.',
+    read: 0,
+    created_at: new Date(Date.now() - 3600000 * 3).toISOString()
+  },
+  {
+    id: 2,
+    name: 'Meenakshi Sundaram',
+    email: 'meenakshi.s@outlook.com',
+    subject: 'Post-ICU Recovery & Follow-up',
+    message: 'Hello Doctor, I was discharged from the ICU last month and wanted to schedule a follow-up consultation regarding breathing exercises and medication review.',
+    read: 1,
+    created_at: new Date(Date.now() - 86400000 * 2).toISOString()
+  }
+];
+
+// Default initial appointments for seeding
+const DEFAULT_APPOINTMENTS = [
+  {
+    id: 1,
+    apt_id: 'APT-000001',
+    name: 'Vikram Sethi',
+    phone: '+91-9876543210',
+    age: '48',
+    gender: 'Male',
+    type: 'In-Person',
+    date: new Date().toISOString().split('T')[0],
+    alt_date: '',
+    time_slot: '11:00 AM',
+    reason: 'Critical care follow-up consultation and pulmonary evaluation',
+    status: 'pending',
+    source: 'website',
+    meet_link: '',
+    created_at: new Date(Date.now() - 3600000 * 2).toISOString()
+  }
+];
+
+// ─────────────────────────────────────────────────────────────
+// HIGH-PERFORMANCE IN-MEMORY CACHE (<2ms read latency)
+// ─────────────────────────────────────────────────────────────
+const memoryCache = {
+  appointments: { data: null, exp: 0 },
+  reviews:      { data: null, exp: 0 },
+  messages:     { data: null, exp: 0 },
+  chatLogs:     { data: null, exp: 0 },
+  content:      { data: null, exp: 0 },
+  stats:        { data: null, exp: 0 }
+};
+
+function getFromCache(key) {
+  const item = memoryCache[key];
+  if (item && item.data && Date.now() < item.exp) {
+    return item.data;
+  }
+  return null;
+}
+
+function setToCache(key, data, ttlMs = 12000) {
+  memoryCache[key] = { data, exp: Date.now() + ttlMs };
+}
+
+function invalidateCache(key) {
+  if (key && memoryCache[key]) {
+    memoryCache[key].exp = 0;
+  }
+  memoryCache.stats.exp = 0; // any write invalidates stats
+}
+
 // Helper to determine next numeric ID in Firestore
 async function getNextFirestoreId(collectionName) {
   const fs = getFirestore();
@@ -36,21 +110,42 @@ async function runWithFallback(fsFn, localFn, opName) {
 // APPOINTMENTS
 // ─────────────────────────────────────────────────────────────
 async function getAppointments() {
-  return runWithFallback(
+  const cached = getFromCache('appointments');
+  if (cached) return cached;
+
+  const result = await runWithFallback(
     async () => {
       const fs = getFirestore();
       const snap = await fs.collection('appointments').get();
+      if (snap.empty) {
+        // Seed default appointment if empty
+        const batch = fs.batch();
+        for (const apt of DEFAULT_APPOINTMENTS) {
+          batch.set(fs.collection('appointments').doc(apt.apt_id), apt);
+        }
+        await batch.commit();
+        return [...DEFAULT_APPOINTMENTS];
+      }
       const list = snap.docs.map(doc => ({ ...doc.data(), _docId: doc.id }));
       return list.sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
     },
     async () => {
-      return db.get('appointments').sortBy('created_at').reverse().value() || [];
+      let list = db.get('appointments').value();
+      if (!Array.isArray(list) || list.length === 0) {
+        db.set('appointments', DEFAULT_APPOINTMENTS).write();
+        list = DEFAULT_APPOINTMENTS;
+      }
+      return [...list].sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
     },
     'getAppointments'
   );
+
+  setToCache('appointments', result, 10000);
+  return result;
 }
 
 async function createAppointment(data) {
+  invalidateCache('appointments');
   return runWithFallback(
     async () => {
       const fs = getFirestore();
@@ -105,6 +200,7 @@ async function createAppointment(data) {
 }
 
 async function updateAppointment(id, updates) {
+  invalidateCache('appointments');
   return runWithFallback(
     async () => {
       const fs = getFirestore();
@@ -138,6 +234,7 @@ async function updateAppointment(id, updates) {
 }
 
 async function deleteAppointment(id) {
+  invalidateCache('appointments');
   return runWithFallback(
     async () => {
       const fs = getFirestore();
@@ -168,7 +265,10 @@ async function deleteAppointment(id) {
 // REVIEWS
 // ─────────────────────────────────────────────────────────────
 async function getReviews() {
-  return runWithFallback(
+  const cached = getFromCache('reviews');
+  if (cached) return cached;
+
+  const result = await runWithFallback(
     async () => {
       const fs = getFirestore();
       const snap = await fs.collection('reviews').get();
@@ -194,9 +294,13 @@ async function getReviews() {
     },
     'getReviews'
   );
+
+  setToCache('reviews', result, 15000);
+  return result;
 }
 
 async function createReview(data) {
+  invalidateCache('reviews');
   const colors = ['#2e75b6', '#1e5f9e', '#5b9bd5', '#128C7E', '#c8a84b', '#e87040'];
   const color = data.color || colors[Math.floor(Math.random() * colors.length)];
 
@@ -238,6 +342,7 @@ async function createReview(data) {
 }
 
 async function updateReview(id, updates) {
+  invalidateCache('reviews');
   const numId = Number(id);
   return runWithFallback(
     async () => {
@@ -261,6 +366,7 @@ async function updateReview(id, updates) {
 }
 
 async function deleteReview(id) {
+  invalidateCache('reviews');
   const numId = Number(id);
   return runWithFallback(
     async () => {
@@ -278,6 +384,7 @@ async function deleteReview(id) {
 }
 
 async function resetReviews() {
+  invalidateCache('reviews');
   return runWithFallback(
     async () => {
       const fs = getFirestore();
@@ -304,21 +411,42 @@ async function resetReviews() {
 // MESSAGES
 // ─────────────────────────────────────────────────────────────
 async function getMessages() {
-  return runWithFallback(
+  const cached = getFromCache('messages');
+  if (cached) return cached;
+
+  const result = await runWithFallback(
     async () => {
       const fs = getFirestore();
       const snap = await fs.collection('messages').get();
+      if (snap.empty) {
+        // Seed default messages if collection is empty
+        const batch = fs.batch();
+        for (const msg of DEFAULT_MESSAGES) {
+          batch.set(fs.collection('messages').doc(`msg_${msg.id}`, msg), msg);
+        }
+        await batch.commit();
+        return [...DEFAULT_MESSAGES];
+      }
       const list = snap.docs.map(doc => doc.data());
       return list.sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
     },
     async () => {
-      return db.get('messages').sortBy('created_at').reverse().value() || [];
+      let list = db.get('messages').value();
+      if (!Array.isArray(list) || list.length === 0) {
+        db.set('messages', DEFAULT_MESSAGES).write();
+        list = DEFAULT_MESSAGES;
+      }
+      return [...list].sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
     },
     'getMessages'
   );
+
+  setToCache('messages', result, 10000);
+  return result;
 }
 
 async function createMessage(data) {
+  invalidateCache('messages');
   return runWithFallback(
     async () => {
       const fs = getFirestore();
@@ -355,6 +483,7 @@ async function createMessage(data) {
 }
 
 async function updateMessage(id, updates) {
+  invalidateCache('messages');
   const numId = Number(id);
   return runWithFallback(
     async () => {
@@ -378,6 +507,7 @@ async function updateMessage(id, updates) {
 }
 
 async function deleteMessage(id) {
+  invalidateCache('messages');
   const numId = Number(id);
   return runWithFallback(
     async () => {
@@ -398,7 +528,10 @@ async function deleteMessage(id) {
 // CHAT LOGS
 // ─────────────────────────────────────────────────────────────
 async function getChatLogs() {
-  return runWithFallback(
+  const cached = getFromCache('chatLogs');
+  if (cached) return cached;
+
+  const result = await runWithFallback(
     async () => {
       const fs = getFirestore();
       const snap = await fs.collection('chat_logs').get();
@@ -410,9 +543,13 @@ async function getChatLogs() {
     },
     'getChatLogs'
   );
+
+  setToCache('chatLogs', result, 10000);
+  return result;
 }
 
 async function createChatLog(data) {
+  invalidateCache('chatLogs');
   return runWithFallback(
     async () => {
       const fs = getFirestore();
@@ -443,6 +580,7 @@ async function createChatLog(data) {
 }
 
 async function deleteChatLog(id) {
+  invalidateCache('chatLogs');
   const numId = Number(id);
   return runWithFallback(
     async () => {
@@ -460,6 +598,7 @@ async function deleteChatLog(id) {
 }
 
 async function clearChatLogs() {
+  invalidateCache('chatLogs');
   return runWithFallback(
     async () => {
       const fs = getFirestore();
@@ -482,7 +621,10 @@ async function clearChatLogs() {
 // SITE CONTENT & CMS
 // ─────────────────────────────────────────────────────────────
 async function getContent() {
-  return runWithFallback(
+  const cached = getFromCache('content');
+  if (cached) return cached;
+
+  const result = await runWithFallback(
     async () => {
       const fs = getFirestore();
       const docRef = fs.collection('settings').doc('content');
@@ -503,9 +645,13 @@ async function getContent() {
     },
     'getContent'
   );
+
+  setToCache('content', result, 30000);
+  return result;
 }
 
 async function updateContent(newContent) {
+  invalidateCache('content');
   const current = await getContent();
   const updated = {
     profile:      newContent.profile      || current.profile,
@@ -531,6 +677,7 @@ async function updateContent(newContent) {
 }
 
 async function resetContent() {
+  invalidateCache('content');
   return runWithFallback(
     async () => {
       const fs = getFirestore();
@@ -590,6 +737,9 @@ async function updateAdminPassword(newPassword) {
 // DASHBOARD STATS
 // ─────────────────────────────────────────────────────────────
 async function getStats() {
+  const cached = getFromCache('stats');
+  if (cached) return cached;
+
   let appointments = [];
   let reviews = [];
   let messages = [];
@@ -625,7 +775,7 @@ async function getStats() {
     ? (safeRevs.reduce((sum, r) => sum + (Number(r.rating) || 0), 0) / safeRevs.length).toFixed(1)
     : '5.0';
 
-  return {
+  const statsResult = {
     engine: isFirebaseConfigured() ? 'firebase-firestore' : 'local-lowdb',
     counts: {
       totalAppointments: safeApts.length,
@@ -645,6 +795,9 @@ async function getStats() {
       reviews: safeRevs.slice(0, 5)
     }
   };
+
+  setToCache('stats', statsResult, 10000);
+  return statsResult;
 }
 
 module.exports = {
