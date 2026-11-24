@@ -45,7 +45,7 @@ export default function Hero({ onBook }) {
           {/* Doctor Name & Credentials */}
           <h1
             className="font-display font-bold leading-[1.03] text-gray-900 dark:text-white mb-3"
-            style={{ fontSize: 'clamp(2.7rem, 5.2vw, 5.4rem)' }}
+            style={{ fontSize: 'clamp(2.15rem, 5.2vw, 5.4rem)' }}
           >
             {p.name || 'Dr. Shiva Singh'}
           </h1>
@@ -61,8 +61,8 @@ export default function Hero({ onBook }) {
           </div>
 
           {/* Animated Medical Heartbeat ECG Monitor Waveform */}
-          <div className="flex items-center gap-3 py-2 mb-4">
-            <svg className="w-52 h-7 text-sky-500 dark:text-sky-400" viewBox="0 0 240 28" fill="none">
+          <div className="flex items-center gap-2.5 sm:gap-3 py-2 mb-4 flex-wrap">
+            <svg className="w-40 sm:w-52 h-7 text-sky-500 dark:text-sky-400 flex-shrink-0" viewBox="0 0 240 28" fill="none">
               <path
                 d="M0 14 H80 L86 4 L94 24 L102 6 L108 19 L114 14 H240"
                 stroke="currentColor"
@@ -135,24 +135,24 @@ export default function Hero({ onBook }) {
           <div className="absolute inset-0 m-auto w-[290px] h-[360px] lg:w-[330px] lg:h-[400px] rounded-3xl bg-gradient-to-tr from-sky-400/30 via-teal-400/20 to-sky-500/30 blur-2xl -z-10 animate-pulse" />
 
           {/* Floating Clinical Badge 1: Top Right */}
-          <div className="absolute -top-1 -right-4 z-20 medical-card px-3.5 py-2 rounded-2xl flex items-center gap-2.5 animate-float">
-            <div className="w-8 h-8 rounded-xl bg-sky-100 dark:bg-sky-900/40 text-sky-600 dark:text-sky-300 flex items-center justify-center text-sm shadow-inner">
+          <div className="absolute -top-1 -right-2 sm:-right-4 z-20 medical-card px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-2xl flex items-center gap-2 sm:gap-2.5 animate-float shadow-md">
+            <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-sky-100 dark:bg-sky-900/40 text-sky-600 dark:text-sky-300 flex items-center justify-center text-xs sm:text-sm shadow-inner">
               🩺
             </div>
             <div>
-              <div className="text-[11px] font-bold text-gray-900 dark:text-white leading-tight">Critical Care</div>
-              <div className="text-[9px] text-gray-400 uppercase tracking-wider font-semibold">ICU / MICU Lead</div>
+              <div className="text-[10px] sm:text-[11px] font-bold text-gray-900 dark:text-white leading-tight">Critical Care</div>
+              <div className="text-[8px] sm:text-[9px] text-gray-400 uppercase tracking-wider font-semibold">ICU / MICU Lead</div>
             </div>
           </div>
 
           {/* Floating Clinical Badge 2: Bottom Left */}
-          <div className="absolute -left-6 bottom-10 z-20 medical-card px-3.5 py-2 rounded-2xl hidden sm:flex items-center gap-2.5 animate-float-delayed">
-            <div className="w-8 h-8 rounded-xl bg-emerald-100 dark:bg-emerald-900/40 text-emerald-600 dark:text-emerald-300 flex items-center justify-center text-sm shadow-inner">
+          <div className="absolute -left-2 sm:-left-6 bottom-10 z-20 medical-card px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-2xl hidden sm:flex items-center gap-2 sm:gap-2.5 animate-float-delayed shadow-md">
+            <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-emerald-100 dark:bg-emerald-900/40 text-emerald-600 dark:text-emerald-300 flex items-center justify-center text-xs sm:text-sm shadow-inner">
               🫁
             </div>
             <div>
-              <div className="text-[11px] font-bold text-gray-900 dark:text-white leading-tight">Advanced Care</div>
-              <div className="text-[9px] text-gray-400 uppercase tracking-wider font-semibold">Ventilator Protocol</div>
+              <div className="text-[10px] sm:text-[11px] font-bold text-gray-900 dark:text-white leading-tight">Advanced Care</div>
+              <div className="text-[8px] sm:text-[9px] text-gray-400 uppercase tracking-wider font-semibold">Ventilator Protocol</div>
             </div>
           </div>
 

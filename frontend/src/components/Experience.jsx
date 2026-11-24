@@ -1,12 +1,16 @@
 import { useState } from 'react'
 import { useScrollReveal } from '../hooks/useScrollReveal'
 import { usePortfolioContent } from '../context/ContentContext'
-import { Building2, MapPin, CheckCircle, ChevronDown, Award, ShieldCheck } from 'lucide-react'
+import { Building2, MapPin, ChevronDown, ShieldCheck } from 'lucide-react'
 
 export default function Experience({ onBook }) {
   const [active, setActive] = useState(0)
   const ref = useScrollReveal()
   const { content } = usePortfolioContent()
+
+  const toggleCard = (index) => {
+    setActive((prev) => (prev === index ? -1 : index))
+  }
 
   const EXP = content?.experience || [
     {
@@ -50,20 +54,27 @@ export default function Experience({ onBook }) {
   const p = content?.profile || {}
 
   return (
-    <section id="experience" className="py-24 px-[5%] bg-white dark:bg-gray-900 transition-colors duration-300 relative">
+    <section id="experience" className="py-20 sm:py-24 px-[5%] bg-white dark:bg-gray-900 transition-colors duration-300 relative overflow-hidden">
+      {/* Background medical glow */}
+      <div className="absolute top-1/3 -right-32 w-80 h-80 bg-sky-400/5 rounded-full blur-3xl pointer-events-none" />
+
       <div className="max-w-6xl mx-auto reveal" ref={ref}>
         {/* Section Header */}
-        <div className="text-left mb-12">
-          <p className="inline-flex items-center gap-2 text-[10px] uppercase tracking-[0.22em] text-sky-500 font-bold mb-2 before:content-[''] before:w-5 before:h-[1.5px] before:bg-sky-500">
+        <div className="text-left mb-10 sm:mb-12">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-sky-100/80 dark:bg-sky-950/70 border border-sky-200/80 dark:border-sky-800 text-sky-700 dark:text-sky-300 text-[10px] uppercase tracking-[0.2em] font-semibold mb-3">
+            <span className="w-1.5 h-1.5 rounded-full bg-teal-500 animate-pulse" />
             🏥 Career Timeline
-          </p>
-          <h2 className="font-display font-bold text-gray-900 dark:text-white" style={{ fontSize: 'clamp(2rem, 3.6vw, 2.85rem)' }}>
-            Clinical <em className="text-sky-500 font-light italic">Residency & Experience</em>
+          </div>
+          <h2 className="font-display font-bold text-gray-900 dark:text-white" style={{ fontSize: 'clamp(1.85rem, 3.6vw, 2.85rem)' }}>
+            Clinical <em className="text-transparent bg-clip-text bg-gradient-to-r from-sky-600 via-teal-500 to-sky-700 dark:from-sky-400 dark:via-teal-300 dark:to-cyan-400 font-light italic">Residency &amp; Experience</em>
           </h2>
-          <div className="w-12 h-0.5 bg-gradient-to-r from-sky-500 to-teal-400 rounded-full mt-3" />
+          <p className="text-gray-500 dark:text-gray-400 text-xs sm:text-sm mt-1 max-w-xl font-light">
+            Progressive clinical leadership across premier tertiary critical care departments. Click any position to view case highlights.
+          </p>
+          <div className="w-12 h-1 bg-gradient-to-r from-sky-500 to-teal-400 rounded-full mt-3" />
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-[1fr_340px] gap-10">
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_340px] gap-8 sm:gap-10 items-start">
           {/* Timeline Cards Column */}
           <div className="space-y-6">
             {EXP.map((e, i) => {
@@ -71,23 +82,25 @@ export default function Experience({ onBook }) {
               return (
                 <div
                   key={e.id || i}
-                  onClick={() => setActive(i)}
-                  className={`relative pl-7 pb-6 border-l-2 cursor-pointer last:border-l-transparent transition-all duration-300 ${
+                  className={`relative pl-6 sm:pl-7 pb-6 border-l-2 last:border-l-transparent transition-all duration-300 ${
                     isSelected ? 'border-sky-500' : 'border-sky-200 dark:border-sky-900'
                   }`}
                 >
                   {/* Timeline Glowing Node */}
                   <div
-                    className={`absolute -left-[8px] top-1.5 w-3.5 h-3.5 rounded-full border-2 transition-all duration-300 flex items-center justify-center ${
+                    onClick={() => toggleCard(i)}
+                    className={`absolute -left-[8px] top-1.5 w-3.5 h-3.5 rounded-full border-2 transition-all duration-300 flex items-center justify-center cursor-pointer ${
                       isSelected
                         ? 'bg-sky-500 border-white dark:border-gray-900 shadow-md shadow-sky-400/60 scale-125'
-                        : 'bg-white dark:bg-gray-900 border-sky-300 dark:border-sky-700'
+                        : 'bg-white dark:bg-gray-900 border-sky-300 dark:border-sky-700 hover:border-sky-500'
                     }`}
+                    title={isSelected ? 'Click to collapse' : 'Click to expand'}
                   >
                     {isSelected && <span className="w-1.5 h-1.5 rounded-full bg-white" />}
                   </div>
 
-                  <div className="flex items-center gap-2 mb-2">
+                  {/* Date badge */}
+                  <div className="flex items-center gap-2 mb-2 flex-wrap">
                     <span className="text-[10px] text-sky-600 dark:text-sky-400 uppercase tracking-widest font-bold">
                       📅 {e.date}
                     </span>
@@ -98,40 +111,73 @@ export default function Experience({ onBook }) {
                     )}
                   </div>
 
-                  {/* Card Content */}
+                  {/* Card Content with Toggle Header */}
                   <div
                     className={`medical-card rounded-2xl p-5 sm:p-6 transition-all duration-300 relative overflow-hidden ${
-                      isSelected ? 'border-sky-400 dark:border-sky-600 shadow-xl shadow-sky-500/10 ring-1 ring-sky-400/20' : ''
+                      isSelected
+                        ? 'border-sky-400 dark:border-sky-600 shadow-xl shadow-sky-500/10 ring-1 ring-sky-400/20'
+                        : 'hover:border-sky-300 dark:hover:border-sky-700'
                     }`}
                   >
-                    <div className="flex items-start justify-between gap-3 mb-1.5">
-                      <div className="text-gray-900 dark:text-gray-100 font-semibold text-[0.98rem]">
-                        {e.role}
+                    {/* Clickable Header for Collapsing/Expanding */}
+                    <div
+                      onClick={() => toggleCard(i)}
+                      className="flex items-start justify-between gap-3 cursor-pointer select-none group/hdr"
+                      title={isSelected ? 'Click to collapse case notes' : 'Click to expand case notes'}
+                    >
+                      <div>
+                        <h3 className="text-gray-900 dark:text-gray-100 font-bold text-[0.98rem] group-hover/hdr:text-sky-600 dark:group-hover/hdr:text-sky-400 transition-colors">
+                          {e.role}
+                        </h3>
+                        <div className="flex items-center gap-2 text-sky-600 dark:text-sky-400 text-[0.83rem] font-medium mt-1 flex-wrap">
+                          <Building2 size={13} />
+                          <span className="font-semibold">{e.org}</span>
+                          <span className="text-gray-400 text-[0.76rem] flex items-center gap-0.5">
+                            <MapPin size={11} /> {e.loc}
+                          </span>
+                        </div>
                       </div>
-                      <ChevronDown
-                        size={17}
-                        className={`text-gray-400 transition-transform duration-300 ${isSelected ? 'rotate-180 text-sky-500' : ''}`}
-                      />
+
+                      {/* Interactive Arrow Collapse Button */}
+                      <button
+                        type="button"
+                        onClick={(ev) => {
+                          ev.stopPropagation()
+                          toggleCard(i)
+                        }}
+                        aria-expanded={isSelected}
+                        aria-label={isSelected ? 'Collapse clinical details' : 'Expand clinical details'}
+                        className={`w-8 h-8 rounded-xl flex items-center justify-center transition-all flex-shrink-0 cursor-pointer ${
+                          isSelected
+                            ? 'bg-sky-500 text-white shadow-md shadow-sky-500/30'
+                            : 'bg-sky-50 dark:bg-white/5 text-gray-400 hover:text-sky-500 hover:bg-sky-100 dark:hover:bg-white/10'
+                        }`}
+                      >
+                        <ChevronDown
+                          size={18}
+                          className={`transition-transform duration-300 ${isSelected ? 'rotate-180' : 'rotate-0'}`}
+                        />
+                      </button>
                     </div>
 
-                    <div className="flex items-center gap-2 text-sky-600 dark:text-sky-400 text-[0.83rem] font-medium mb-3 flex-wrap">
-                      <Building2 size={13} />
-                      <span className="font-semibold">{e.org}</span>
-                      <span className="text-gray-400 text-[0.76rem] flex items-center gap-0.5">
-                        <MapPin size={11} /> {e.loc}
+                    <div className="mt-3">
+                      <span className="inline-block px-2.5 py-1 rounded-lg bg-sky-50 dark:bg-sky-950/50 border border-sky-100 dark:border-sky-900/60 text-sky-700 dark:text-sky-300 text-[9.5px] font-semibold uppercase tracking-wider">
+                        {e.badge}
                       </span>
                     </div>
 
-                    <span className="inline-block px-2.5 py-1 rounded-lg bg-sky-50 dark:bg-sky-950/50 border border-sky-100 dark:border-sky-900/60 text-sky-700 dark:text-sky-300 text-[9.5px] font-semibold uppercase tracking-wider mb-2">
-                      {e.badge}
-                    </span>
-
-                    {/* Expandable Case Points */}
+                    {/* Expandable / Collapsible Case Points */}
                     <div
-                      className={`overflow-hidden transition-all duration-400 ${
-                        isSelected ? 'max-h-96 opacity-100 mt-4 pt-4 border-t border-sky-100 dark:border-white/10' : 'max-h-0 opacity-0'
+                      className={`overflow-hidden transition-all duration-300 ${
+                        isSelected
+                          ? 'max-h-96 opacity-100 mt-4 pt-4 border-t border-sky-100 dark:border-white/10'
+                          : 'max-h-0 opacity-0 mt-0 pt-0 pointer-events-none'
                       }`}
                     >
+                      <div className="text-[10px] uppercase tracking-wider text-gray-400 font-semibold mb-2 flex items-center gap-1.5">
+                        <span className="w-1.5 h-1.5 rounded-full bg-sky-500" />
+                        Clinical Responsibilities &amp; Case Notes
+                      </div>
                       <ul className="space-y-2.5">
                         {(e.points || []).map((pt, j) => (
                           <li key={j} className="flex items-start gap-2.5 text-gray-600 dark:text-gray-300 text-[0.82rem] font-light leading-relaxed">
@@ -148,7 +194,7 @@ export default function Experience({ onBook }) {
           </div>
 
           {/* Right Column: Physician Credentials Dossier */}
-          <div className="mt-8 lg:mt-0">
+          <div className="mt-6 lg:mt-0">
             <div className="sticky top-28 medical-card rounded-2xl p-6 sm:p-7 shadow-md relative overflow-hidden">
               {/* Top Accent Ribbon */}
               <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-sky-500 via-teal-400 to-sky-600" />

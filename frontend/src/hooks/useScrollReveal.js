@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react'
+
 export function useScrollReveal() {
   const ref = useRef(null)
   useEffect(() => {
@@ -9,8 +10,9 @@ export function useScrollReveal() {
         el.classList.add('visible')
         el.querySelectorAll('.skill-bar[data-w]').forEach(b => b.style.width = b.dataset.w + '%')
         el.querySelectorAll('.rb-fill[data-p]').forEach(b => setTimeout(() => b.style.width = b.dataset.p + '%', 200))
+        obs.unobserve(el)
       }
-    }, { threshold: 0.1 })
+    }, { threshold: 0.05, rootMargin: '0px 0px -30px 0px' })
     obs.observe(el)
     return () => obs.disconnect()
   }, [])
