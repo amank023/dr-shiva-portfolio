@@ -1,13 +1,14 @@
-const admin = require('firebase-admin');
-const fs    = require('fs');
-const path  = require('path');
+const { initializeApp, cert, getApps } = require('firebase-admin/app');
+const { getFirestore }                   = require('firebase-admin/firestore');
+const fs   = require('fs');
+const path = require('path');
 
 let firestore    = null;
 let isConfigured = false;
 let initError    = null;
 
 function initFirebase() {
-  if (firestore) return { admin, firestore, isConfigured: true };
+  if (firestore) return { firestore, isConfigured: true };
 
   try {
     // 1. Direct path from environment or default file locations
@@ -34,21 +35,22 @@ function initFirebase() {
 
     if (jsonStr) {
       const parsed = JSON.parse(jsonStr);
-      credential = admin.credential.cert(parsed);
+      credential = cert(parsed);
+      console.log('🔑 [Firebase] Loaded service account from JSON environment variable');
     } else if (keyFilePath) {
       const parsed = JSON.parse(fs.readFileSync(keyFilePath, 'utf8'));
-      credential = admin.credential.cert(parsed);
+      credential = cert(parsed);
       console.log(`🔑 [Firebase] Loaded service account from ${path.basename(keyFilePath)}`);
     } else if (projectId && clientEmail && privateKey) {
-      credential = admin.credential.cert({ projectId, clientEmail, privateKey });
+      credential = cert({ projectId, clientEmail, privateKey });
       console.log(`🔑 [Firebase] Loaded credentials from environment variables for project ${projectId}`);
     }
 
     if (credential) {
-      if (!admin.apps.length) {
-        admin.initializeApp({ credential });
+      if (!getApps().length) {
+        initializeApp({ credential });
       }
-      firestore = admin.firestore();
+      firestore = getFirestore();
       firestore.settings({ ignoreUndefinedProperties: true });
       isConfigured = true;
       console.log('🔥 [Firebase] Successfully connected to Google Cloud Firestore!');
@@ -64,13 +66,12 @@ function initFirebase() {
     firestore = null;
   }
 
-  return { admin, firestore, isConfigured, initError };
+  return { firestore, isConfigured, initError };
 }
 
 initFirebase();
 
 module.exports = {
-  admin,
   getFirestore: () => firestore,
   isFirebaseConfigured: () => isConfigured,
   reinitFirebase: initFirebase
