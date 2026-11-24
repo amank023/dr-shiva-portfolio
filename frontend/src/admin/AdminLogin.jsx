@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { adminLogin } from '../hooks/api'
-import { Lock, ArrowRight, ShieldCheck, Stethoscope, Eye, EyeOff } from 'lucide-react'
+import { Lock, ArrowRight, Stethoscope, Eye, EyeOff } from 'lucide-react'
 import toast from 'react-hot-toast'
 
 export default function AdminLogin({ onLoginSuccess, onBackToSite }) {
@@ -70,13 +70,6 @@ export default function AdminLogin({ onLoginSuccess, onBackToSite }) {
                 {showPassword ? <EyeOff size={17} /> : <Eye size={17} />}
               </button>
             </div>
-            <p className="text-[11px] text-gray-400 mt-2 flex items-center gap-1.5 flex-wrap">
-              <ShieldCheck size={14} className="text-sky-500 flex-shrink-0" />
-              <span>Password:</span>
-              <code className="bg-sky-50 dark:bg-white/10 px-1.5 py-0.5 rounded text-sky-600 dark:text-sky-400 font-mono text-[10.5px]">admin123</code>
-              <span className="text-gray-400">or</span>
-              <code className="bg-sky-50 dark:bg-white/10 px-1.5 py-0.5 rounded text-sky-600 dark:text-sky-400 font-mono text-[10.5px]">Admin@123</code>
-            </p>
           </div>
 
           <button
