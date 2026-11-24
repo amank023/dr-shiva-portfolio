@@ -48,12 +48,6 @@ export default function Footer({ onOpenAdmin }) {
               {l.label}
             </a>
           ))}
-          <button
-            onClick={onOpenAdmin}
-            className="text-sky-600 dark:text-sky-400 text-[0.72rem] font-semibold uppercase tracking-wider hover:underline flex items-center gap-1 px-2.5 py-1 rounded-lg bg-sky-100/60 dark:bg-white/5 border border-sky-200/60 dark:border-white/10"
-          >
-            🔐 Admin Portal
-          </button>
         </div>
 
         {/* Copyright */}
