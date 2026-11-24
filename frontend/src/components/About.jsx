@@ -85,20 +85,20 @@ export default function About({ onBook }) {
           </div>
 
           {/* Right Column: Pillars of Practice */}
-          <div className="space-y-3.5">
+          <div className="space-y-4">
             {pillars.map((p) => (
               <div
                 key={p.title}
-                className="medical-card rounded-2xl p-4.5 flex gap-4 items-start hover:border-sky-400 dark:hover:border-sky-600 transition-all cursor-default group"
+                className="medical-card rounded-2xl p-5 sm:p-6 flex gap-4 items-start hover:border-sky-400 dark:hover:border-sky-600 transition-all cursor-default group relative overflow-hidden"
               >
-                <div className="w-11 h-11 rounded-xl bg-sky-50 dark:bg-sky-950/60 border border-sky-200/80 dark:border-sky-800 flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform">
+                <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-sky-50 to-teal-50 dark:from-sky-950/60 dark:to-teal-950/60 border border-sky-200/80 dark:border-sky-800 flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform shadow-xs">
                   {p.icon}
                 </div>
-                <div>
-                  <div className="text-gray-900 dark:text-gray-100 font-semibold text-[0.88rem] mb-1">
+                <div className="flex-1 min-w-0">
+                  <div className="text-gray-900 dark:text-gray-100 font-semibold text-[0.9rem] mb-1.5 leading-snug">
                     {p.title}
                   </div>
-                  <div className="text-gray-500 dark:text-gray-400 text-[0.79rem] leading-relaxed font-light">
+                  <div className="text-gray-500 dark:text-gray-400 text-[0.8rem] leading-relaxed font-light">
                     {p.desc}
                   </div>
                 </div>
@@ -107,7 +107,7 @@ export default function About({ onBook }) {
 
             <button
               onClick={onBook}
-              className="w-full flex items-center justify-center gap-2 mt-4 py-3.5 rounded-xl bg-gradient-to-r from-sky-500 via-sky-600 to-teal-600 text-white text-[0.84rem] font-semibold uppercase tracking-wider hover:opacity-95 hover:shadow-xl hover:shadow-sky-500/25 active:scale-[0.99] transition-all cursor-pointer shadow-md shadow-sky-400/20"
+              className="w-full flex items-center justify-center gap-2 mt-5 py-3.5 rounded-xl bg-gradient-to-r from-sky-500 via-sky-600 to-teal-600 text-white text-[0.84rem] font-semibold uppercase tracking-wider hover:opacity-95 hover:shadow-xl hover:shadow-sky-500/25 active:scale-[0.99] transition-all cursor-pointer shadow-md shadow-sky-400/20"
             >
               <Calendar size={15} />
               <span>Schedule Clinical Consultation</span>

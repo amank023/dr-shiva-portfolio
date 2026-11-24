@@ -63,7 +63,7 @@ export default function Experience({ onBook }) {
           <div className="w-12 h-0.5 bg-gradient-to-r from-sky-500 to-teal-400 rounded-full mt-3" />
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-[1fr_310px] gap-10">
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_340px] gap-10">
           {/* Timeline Cards Column */}
           <div className="space-y-6">
             {EXP.map((e, i) => {
@@ -78,7 +78,7 @@ export default function Experience({ onBook }) {
                 >
                   {/* Timeline Glowing Node */}
                   <div
-                    className={`absolute -left-[8px] top-1 w-3.5 h-3.5 rounded-full border-2 transition-all duration-300 flex items-center justify-center ${
+                    className={`absolute -left-[8px] top-1.5 w-3.5 h-3.5 rounded-full border-2 transition-all duration-300 flex items-center justify-center ${
                       isSelected
                         ? 'bg-sky-500 border-white dark:border-gray-900 shadow-md shadow-sky-400/60 scale-125'
                         : 'bg-white dark:bg-gray-900 border-sky-300 dark:border-sky-700'
@@ -92,7 +92,7 @@ export default function Experience({ onBook }) {
                       📅 {e.date}
                     </span>
                     {i === 0 && (
-                      <span className="px-2 py-0.2 rounded-full text-[8.5px] font-bold uppercase tracking-wider bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-300/40">
+                      <span className="px-2 py-0.5 rounded-full text-[8.5px] font-bold uppercase tracking-wider bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-300/40">
                         Most Recent
                       </span>
                     )}
@@ -100,12 +100,12 @@ export default function Experience({ onBook }) {
 
                   {/* Card Content */}
                   <div
-                    className={`medical-card rounded-2xl p-5.5 transition-all duration-300 ${
-                      isSelected ? 'border-sky-400 dark:border-sky-600 shadow-xl shadow-sky-500/10' : ''
+                    className={`medical-card rounded-2xl p-5 sm:p-6 transition-all duration-300 relative overflow-hidden ${
+                      isSelected ? 'border-sky-400 dark:border-sky-600 shadow-xl shadow-sky-500/10 ring-1 ring-sky-400/20' : ''
                     }`}
                   >
                     <div className="flex items-start justify-between gap-3 mb-1.5">
-                      <div className="text-gray-900 dark:text-gray-100 font-semibold text-[0.96rem]">
+                      <div className="text-gray-900 dark:text-gray-100 font-semibold text-[0.98rem]">
                         {e.role}
                       </div>
                       <ChevronDown
@@ -129,13 +129,13 @@ export default function Experience({ onBook }) {
                     {/* Expandable Case Points */}
                     <div
                       className={`overflow-hidden transition-all duration-400 ${
-                        isSelected ? 'max-h-96 opacity-100 mt-3 pt-3 border-t border-sky-100 dark:border-white/10' : 'max-h-0 opacity-0'
+                        isSelected ? 'max-h-96 opacity-100 mt-4 pt-4 border-t border-sky-100 dark:border-white/10' : 'max-h-0 opacity-0'
                       }`}
                     >
-                      <ul className="space-y-2">
+                      <ul className="space-y-2.5">
                         {(e.points || []).map((pt, j) => (
-                          <li key={j} className="flex items-start gap-2 text-gray-600 dark:text-gray-300 text-[0.81rem] font-light">
-                            <span className="text-sky-500 font-bold mt-0.5">▸</span>
+                          <li key={j} className="flex items-start gap-2.5 text-gray-600 dark:text-gray-300 text-[0.82rem] font-light leading-relaxed">
+                            <span className="text-sky-500 font-bold mt-0.5 text-xs">▸</span>
                             <span>{pt}</span>
                           </li>
                         ))}
@@ -149,13 +149,16 @@ export default function Experience({ onBook }) {
 
           {/* Right Column: Physician Credentials Dossier */}
           <div className="mt-8 lg:mt-0">
-            <div className="sticky top-28 medical-card rounded-2xl p-6 shadow-md border-t-4 border-t-sky-500">
-              <div className="flex items-center justify-between mb-5 pb-3 border-b border-sky-100 dark:border-white/10">
+            <div className="sticky top-28 medical-card rounded-2xl p-6 sm:p-7 shadow-md relative overflow-hidden">
+              {/* Top Accent Ribbon */}
+              <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-sky-500 via-teal-400 to-sky-600" />
+
+              <div className="flex items-center justify-between mb-5 pb-3 border-b border-sky-100 dark:border-white/10 pt-1">
                 <div>
                   <p className="text-[10px] uppercase tracking-[0.18em] text-sky-500 font-bold">Physician Dossier</p>
                   <h3 className="font-display font-bold text-gray-900 dark:text-white text-base">Professional Focus</h3>
                 </div>
-                <div className="w-8 h-8 rounded-xl bg-sky-50 dark:bg-sky-900/40 text-sky-500 flex items-center justify-center">
+                <div className="w-9 h-9 rounded-xl bg-sky-50 dark:bg-sky-900/40 border border-sky-100 dark:border-sky-800 text-sky-500 flex items-center justify-center text-lg shadow-xs">
                   🩺
                 </div>
               </div>
@@ -169,20 +172,20 @@ export default function Experience({ onBook }) {
                 ['Accreditations', 'NABH Quality Processes (3×)']
               ].map(([l, v]) => (
                 <div key={l} className="border-b border-sky-50 dark:border-white/5 pb-2.5 mb-2.5 last:border-b-0 last:mb-0 last:pb-0">
-                  <div className="text-[9px] text-gray-400 uppercase tracking-[0.16em] font-semibold">{l}</div>
-                  <div className="text-gray-800 dark:text-gray-200 text-[0.84rem] font-semibold mt-0.5">{v}</div>
+                  <div className="text-[9.5px] text-gray-400 uppercase tracking-[0.16em] font-semibold">{l}</div>
+                  <div className="text-gray-800 dark:text-gray-200 text-[0.84rem] font-semibold mt-0.5 leading-snug">{v}</div>
                 </div>
               ))}
 
-              <div className="mt-5 pt-4 border-t border-sky-100 dark:border-white/10 flex items-center justify-between">
+              <div className="mt-5 pt-4 border-t border-sky-100 dark:border-white/10 flex items-center justify-between gap-2">
                 <div>
-                  <div className="font-display font-bold text-sky-500 text-3xl leading-none">
+                  <div className="font-display font-bold text-transparent bg-clip-text bg-gradient-to-r from-sky-600 to-teal-600 dark:from-sky-400 dark:to-teal-300 text-3xl leading-none">
                     {p.stats?.[0]?.num || '7+'}
                   </div>
-                  <div className="text-[9px] text-gray-400 uppercase tracking-wider font-semibold mt-0.5">Years Experience</div>
+                  <div className="text-[9.5px] text-gray-400 uppercase tracking-wider font-semibold mt-1">Years Experience</div>
                 </div>
-                <div className="flex items-center gap-1 text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 px-2.5 py-1 rounded-full border border-emerald-300/40">
-                  <ShieldCheck size={13} /> Verified Doctor
+                <div className="flex items-center gap-1.5 text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 px-3 py-1.5 rounded-full border border-emerald-300/40 shadow-xs">
+                  <ShieldCheck size={14} /> Verified Doctor
                 </div>
               </div>
             </div>
