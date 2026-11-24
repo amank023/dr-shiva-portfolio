@@ -32,7 +32,17 @@ export const updateContent      = (data)     => api.put('/content', data)
 export const resetContent       = ()         => api.post('/content/reset')
 
 // Auth & Dashboard Stats
-export const adminLogin         = (password) => api.post('/auth/login', { password })
+export const adminLogin = async (password) => {
+  try {
+    return await api.post('/auth/login', { password })
+  } catch (err) {
+    if (!err.response) {
+      // Fallback in case /auth/ is blocked by a browser extension
+      return await api.post('/login', { password })
+    }
+    throw err
+  }
+}
 export const adminVerify        = (token)    => api.post('/auth/verify', { token })
 export const adminChangePassword= (data)     => api.post('/auth/change-password', data)
 export const getAdminStats      = ()         => api.get('/stats')
