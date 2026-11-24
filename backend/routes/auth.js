@@ -1,14 +1,13 @@
-const express = require('express');
-const router  = express.Router();
-const { db }  = require('../db/database');
+const express     = require('express');
+const router      = express.Router();
+const dataService = require('../db/dataService');
 
 const ADMIN_TOKEN = 'dr-shiva-token-auth-secure-2026';
 
-router.post('/login', (req, res) => {
+router.post('/login', async (req, res) => {
   try {
     const { password } = req.body;
-    const settings = db.get('admin_settings').value() || { password: process.env.ADMIN_PASSWORD || 'admin123' };
-    const validPassword = settings.password || 'admin123';
+    const validPassword = await dataService.getAdminPassword();
 
     if (password === validPassword) {
       res.json({ success: true, token: ADMIN_TOKEN, message: 'Authenticated successfully' });
@@ -33,11 +32,10 @@ router.post('/verify', (req, res) => {
   }
 });
 
-router.post('/change-password', (req, res) => {
+router.post('/change-password', async (req, res) => {
   try {
     const { oldPassword, newPassword } = req.body;
-    const settings = db.get('admin_settings').value() || { password: process.env.ADMIN_PASSWORD || 'admin123' };
-    const validPassword = settings.password || 'admin123';
+    const validPassword = await dataService.getAdminPassword();
 
     if (oldPassword !== validPassword) {
       return res.status(401).json({ error: 'Current password does not match' });
@@ -46,7 +44,7 @@ router.post('/change-password', (req, res) => {
       return res.status(400).json({ error: 'New password must be at least 4 characters long' });
     }
 
-    db.set('admin_settings', { password: newPassword }).write();
+    await dataService.updateAdminPassword(newPassword);
     res.json({ message: 'Password updated successfully' });
   } catch(e) {
     res.status(500).json({ error: e.message });

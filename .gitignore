@@ -4,6 +4,10 @@ frontend/node_modules/
 backend/db/portfolio.json
 frontend/dist/
 .env
+backend/.env
+frontend/.env
 *.log
 .DS_Store
 Thumbs.db
+*service-account*.json
+firebase-key.json

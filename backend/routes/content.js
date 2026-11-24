@@ -1,48 +1,33 @@
-const express        = require('express');
-const router         = express.Router();
-const { db }         = require('../db/database');
-const defaultContent = require('../db/defaultContent');
+const express     = require('express');
+const router      = express.Router();
+const dataService = require('../db/dataService');
 
-router.get('/', (req, res) => {
+router.get('/', async (req, res) => {
   try {
-    let content = db.get('content').value();
-    if (!content) {
-      db.set('content', defaultContent).write();
-      content = defaultContent;
-    }
+    const content = await dataService.getContent();
     res.json(content);
   } catch(e) {
     res.status(500).json({ error: e.message });
   }
 });
 
-router.put('/', (req, res) => {
+router.put('/', async (req, res) => {
   try {
     const newContent = req.body;
     if (!newContent || typeof newContent !== 'object') {
       return res.status(400).json({ error: 'Valid content object is required' });
     }
-
-    const current = db.get('content').value() || defaultContent;
-    const updated = {
-      profile:      newContent.profile      || current.profile,
-      experience:   newContent.experience   || current.experience,
-      education:    newContent.education    || current.education,
-      skills:       newContent.skills       || current.skills,
-      achievements: newContent.achievements || current.achievements
-    };
-
-    db.set('content', updated).write();
+    const updated = await dataService.updateContent(newContent);
     res.json({ message: 'Content updated successfully', content: updated });
   } catch(e) {
     res.status(500).json({ error: e.message });
   }
 });
 
-router.post('/reset', (req, res) => {
+router.post('/reset', async (req, res) => {
   try {
-    db.set('content', defaultContent).write();
-    res.json({ message: 'Content reset to defaults successfully', content: defaultContent });
+    const content = await dataService.resetContent();
+    res.json({ message: 'Content reset to defaults successfully', content });
   } catch(e) {
     res.status(500).json({ error: e.message });
   }

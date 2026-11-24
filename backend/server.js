@@ -22,10 +22,19 @@ app.use('/api/content',      require('./routes/content'));
 app.use('/api/auth',         require('./routes/auth'));
 app.use('/api/stats',        require('./routes/stats'));
 
-app.get('/api/health', (req, res) => res.json({ status: 'ok', message: '🏥 API running' }));
+const { isFirebaseConfigured } = require('./db/firebase');
+
+app.get('/api/health', (req, res) => res.json({
+  status: 'ok',
+  message: '🏥 API running',
+  database: isFirebaseConfigured() ? 'Firebase Firestore (Cloud)' : 'Local LowDB (File)'
+}));
 
 app.use((req, res) => res.status(404).json({ error: 'Not found' }));
 app.use((err, req, res, next) => res.status(500).json({ error: err.message }));
 
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`🚀 Server running on http://localhost:${PORT}`));
+app.listen(PORT, () => {
+  console.log(`🚀 Server running on http://localhost:${PORT}`);
+  console.log(`🗄️  Active Database Engine: ${isFirebaseConfigured() ? '🔥 Firebase Cloud Firestore' : '📁 Local LowDB (portfolio.json)'}`);
+});

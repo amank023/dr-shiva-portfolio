@@ -171,9 +171,17 @@ export default function AdminDashboard({ onLogout, onBackToSite }) {
             >
               <Menu size={18} />
             </button>
-            <div className="text-xs text-gray-400 font-medium hidden sm:block">
-              Portal <span className="mx-1.5">/</span>
+            <div className="text-xs text-gray-400 font-medium hidden sm:flex items-center gap-2">
+              <span>Portal</span>
+              <span>/</span>
               <span className="text-gray-800 dark:text-gray-200 capitalize font-semibold">{tab}</span>
+              <span className={`ml-2 px-2.5 py-0.5 rounded-full text-[10px] font-semibold border ${
+                stats?.engine === 'firebase-firestore'
+                  ? 'bg-amber-50 dark:bg-amber-950/30 text-amber-600 dark:text-amber-400 border-amber-300 dark:border-amber-700/60'
+                  : 'bg-sky-50 dark:bg-sky-950/30 text-sky-600 dark:text-sky-400 border-sky-200 dark:border-sky-800/60'
+              }`}>
+                {stats?.engine === 'firebase-firestore' ? '🔥 Cloud Firestore' : '📁 Local LowDB'}
+              </span>
             </div>
           </div>
 
