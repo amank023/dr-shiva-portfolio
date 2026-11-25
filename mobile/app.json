@@ -1,36 +1,4 @@
 {
-  "expo": {
-    "name": "Dr. Shiva Admin",
-    "slug": "dr-shiva-admin",
-    "version": "1.0.0",
-    "orientation": "portrait",
-    "icon": "./assets/icon.png",
-    "scheme": "drshiva",
-    "userInterfaceStyle": "automatic",
-    "splash": {
-      "backgroundColor": "#0284c7",
-      "resizeMode": "contain"
-    },
-    "ios": {
-      "supportsTablet": true,
-      "bundleIdentifier": "com.drshiva.admin"
-    },
-    "android": {
-      "package": "com.drshiva.admin",
-      "permissions": [
-        "INTERNET",
-        "CALL_PHONE"
-      ],
-      "adaptiveIcon": {
-        "backgroundColor": "#0284c7",
-        "foregroundImage": "./assets/icon.png"
-      }
-    },
-    "web": {
-      "favicon": "./assets/favicon.png"
-    },
-    "plugins": [
-      "expo-asset"
-    ]
-  }
+  "name": "DrShivaAdmin",
+  "displayName": "Dr. Shiva Admin"
 }

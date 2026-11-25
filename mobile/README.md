@@ -1,24 +1,55 @@
-# 🩺 Dr. Shiva Singh — Mobile Admin Android App
+# 🩺 Dr. Shiva Singh — Pure React Native Android Admin App
 
-A complete, production-ready React Native (Expo SDK 52) mobile application for Dr. Shiva Singh to manage all clinical administrative operations directly from his Android smartphone.
+A pure, production-ready **React Native (Community CLI)** Android mobile application with native **Kotlin** and **Java** architecture for Dr. Shiva Singh to manage all clinical administrative operations directly from his Android smartphone.
+
+> **Zero Expo**: Built entirely using pure React Native, native Android Gradle, Kotlin activities, and Java native bridge modules.
 
 ---
 
-## 🌟 Key Features
+## 🏛️ Native Android Architecture (Kotlin & Java)
+
+```
+mobile/android/
+├── app/
+│   ├── build.gradle                              # Application-level Gradle configuration (Hermes, Autolinking)
+│   ├── proguard-rules.pro                        # Release minification rules
+│   └── src/main/
+│       ├── AndroidManifest.xml                   # Android manifest (INTERNET, CALL_PHONE permissions)
+│       ├── java/com/drshivaadmin/
+│       │   ├── MainActivity.kt                   # [KOTLIN] Main ReactActivity entry point
+│       │   ├── MainApplication.kt                # [KOTLIN] ReactApplication with ReactHost & Autolinking
+│       │   ├── ClinicalNativeModule.java         # [JAVA] Native device diagnostics, dialer & toast
+│       │   └── ClinicalNativePackage.java        # [JAVA] ReactPackage registering custom Java modules
+│       └── res/                                  # Native drawables, launch mipmaps, strings, styles
+├── build.gradle                                  # Project-level Gradle (Kotlin 2.2, RN Gradle Plugin)
+├── gradle/wrapper/                               # Gradle Wrapper binaries & properties (Gradle 9.4)
+├── gradle.properties                             # Build flags (Hermes enabled, AndroidX, JVM memory)
+├── gradlew & gradlew.bat                         # Native Android Gradle build runners
+├── local.properties                              # Android SDK location
+└── settings.gradle                               # Gradle subproject inclusions
+```
+
+### Native Code Highlights
+- **Kotlin (`MainActivity.kt` & `MainApplication.kt`)**: Manages the native Android application lifecycle, ReactActivity delegates, and ReactHost initialization.
+- **Java (`ClinicalNativeModule.java` & `ClinicalNativePackage.java`)**: Pure Java native module exposing device diagnostics (model, manufacturer, Android SDK level) and hardware-accelerated direct calling intents (`ACTION_DIAL`) to the JavaScript runtime.
+
+---
+
+## 🌟 Admin Capabilities Included
 
 1. **🔐 Authentication & Master Access**
    - Secure token-based session with persistent offline storage via `@react-native-async-storage/async-storage`.
    - Emergency offline unlock fallback key.
-   - Change Admin Password directly within the app (`SettingsScreen`).
+   - Master password management in Settings.
 
 2. **📊 Live KPI Clinical Overview**
-   - Live metrics: Total Consultations, Pending Appointments, Unread Messages, Average Patient Rating, and Chatbot Transcripts.
+   - Real-time metrics: Total Consultations, Pending Appointments, Unread Messages, Average Patient Rating, and Chatbot Transcripts.
    - Real-time Database Engine indicator: **🔥 Firebase Cloud Firestore** or **📁 LowDB**.
    - Quick Action buttons: Instant Patient Booking, Direct WhatsApp Launch, and Google Meet Video Consultation Room.
 
 3. **📅 Patient Appointments Management**
-   - Filter by status tabs: `All`, `Pending`, `Confirmed`, `Completed`, `Cancelled`.
-   - Live search by patient name, phone number, consultation service, or notes.
+   - Filter by status tabs: `All`, `Pending`, `Confirmed`, `Completed`, `Cancelled` with live badges.
+   - Search by patient name, phone number, consultation service, or notes.
    - Direct patient action buttons on each card:
      - 📞 **Call**: One-tap phone dialer launch (`tel:<phone>`).
      - 💬 **WhatsApp**: Instant WhatsApp chat (`https://wa.me/<phone>`).
@@ -64,33 +95,30 @@ A complete, production-ready React Native (Expo SDK 52) mobile application for D
 
 ---
 
-## 🚀 Running the App
+## 🚀 Running & Building the App
 
-### 1. Start the Mobile Expo Development Server
+### 1. Start Metro Bundler
 ```bash
-cd mobile
-npm start
-```
-Or:
-```bash
-npx expo start
+npm run mobile
+# or
+cd mobile && npx react-native start
 ```
 
-### 2. Run on Your Android Device
-- **Physical Android Phone**:
-  1. Install **Expo Go** from Google Play Store on your phone.
-  2. Ensure your phone and development computer are connected to the same Wi-Fi network.
-  3. Scan the QR code displayed in your terminal using Expo Go.
-  4. In the app login screen or settings, ensure the API URL is set to your computer's LAN IP: `http://10.161.141.191:5000/api`.
+### 2. Run on Android Device / Emulator
+```bash
+npm run mobile:android
+# or
+cd mobile && npx react-native run-android
+```
 
-- **Android Studio Emulator**:
-  1. Start your Android Emulator.
-  2. Press `a` in the Expo terminal.
-  3. Set the API URL to: `http://10.0.2.2:5000/api`.
-
-- **Web Preview**:
-  1. Press `w` in the Expo terminal.
-  2. Set the API URL to: `http://localhost:5000/api`.
+### 3. Build APK with Native Gradle
+To generate the debug APK directly with Gradle:
+```bash
+cd mobile/android
+./gradlew assembleDebug
+```
+The generated APK will be at:
+`mobile/android/app/build/outputs/apk/debug/app-debug.apk`
 
 ---
 
@@ -99,29 +127,29 @@ npx expo start
 ```
 mobile/
 ├── App.js                     # Root component (SafeArea, ThemeProvider, AuthProvider)
-├── app.json                   # Expo configuration (bundle ID com.drshiva.admin, permissions)
-├── package.json               # Expo SDK 52 & React Native dependencies
-├── src/
-│   ├── components/
-│   │   ├── Header.js          # Clinical header, DB engine indicator, dark mode toggle
-│   │   ├── StatCard.js        # KPI overview card
-│   │   └── StatusBadge.js     # Status badges (pending, confirmed, completed, cancelled)
-│   ├── config/
-│   │   └── apiConfig.js       # Preset API URLs (Wi-Fi, Emulator, Localhost, Netlify)
-│   ├── context/
-│   │   ├── AuthContext.js     # Auth session, token storage, login/logout
-│   │   └── ThemeContext.js    # Medical Light/Dark themes
-│   ├── screens/
-│   │   ├── LoginScreen.js         # Master login screen & quick server config modal
-│   │   ├── MainNavigator.js       # Persistent bottom navigation tabs & badge counters
-│   │   ├── OverviewScreen.js      # Dashboard KPI overview & quick actions
-│   │   ├── AppointmentsScreen.js  # Patient appointment scheduling & management
-│   │   ├── MessagesScreen.js      # Patient contact inbox & replies
-│   │   ├── ReviewsScreen.js       # Testimonials moderation & CMS
-│   │   ├── ChatLogsScreen.js      # AI bot transcripts & session logs
-│   │   ├── ContentScreen.js       # Website CMS profile & OPD editor
-│   │   └── SettingsScreen.js      # Security, diagnostics & backend switcher
-│   └── services/
-│       ├── api.js             # Full API client with token headers & error handling
-│       └── storage.js         # AsyncStorage wrapper for token & API URL
+├── app.json                   # Pure React Native app definition
+├── package.json               # Pure React Native 0.88 & React 19 dependencies
+├── metro.config.js            # Metro bundler configuration
+├── babel.config.js            # Babel preset for React Native
+├── index.js                   # AppRegistry entry point
+├── android/                   # Native Android Project (Kotlin & Java)
+│   ├── app/
+│   │   ├── build.gradle
+│   │   └── src/main/
+│   │       ├── AndroidManifest.xml
+│   │       ├── java/com/drshivaadmin/
+│   │       │   ├── MainActivity.kt           # Kotlin ReactActivity
+│   │       │   ├── MainApplication.kt        # Kotlin ReactApplication
+│   │       │   ├── ClinicalNativeModule.java # Java Native Bridge Module
+│   │       │   └── ClinicalNativePackage.java# Java Package
+│   │       └── res/                          # Android Resources
+│   ├── build.gradle
+│   ├── gradlew
+│   └── settings.gradle
+└── src/                       # Pure React Native Application Logic
+    ├── components/            # Clinical Header, KPI StatCards, StatusBadges
+    ├── config/apiConfig.js    # Presets: Wi-Fi, Emulator, Netlify Cloud
+    ├── context/               # AuthContext & ThemeContext
+    ├── screens/               # 8 Admin Screens (Visits, Messages, Reviews, CMS, etc.)
+    └── services/              # API Client & Native Device Bridge
 ```

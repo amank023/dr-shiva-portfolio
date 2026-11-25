@@ -1,6 +1,5 @@
 import React from 'react';
-import { View, ActivityIndicator, StyleSheet, Text } from 'react-native';
-import { StatusBar } from 'expo-status-bar';
+import { View, ActivityIndicator, StyleSheet, Text, StatusBar } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { ThemeProvider, useTheme } from './src/context/ThemeContext';
@@ -15,20 +14,26 @@ function RootNavigation() {
   if (loading) {
     return (
       <View style={[styles.splashContainer, { backgroundColor: theme.colors.background }]}>
+        <StatusBar
+          barStyle={isDark ? 'light-content' : 'dark-content'}
+          backgroundColor={theme.colors.background}
+        />
         <Text style={styles.splashIcon}>🩺</Text>
         <Text style={[styles.splashTitle, { color: theme.colors.text }]}>Dr. Shiva Admin</Text>
         <Text style={[styles.splashSubtitle, { color: theme.colors.textSecondary }]}>
           Connecting to Clinical Practice Portal...
         </Text>
         <ActivityIndicator size="large" color={theme.colors.primary} style={{ marginTop: 24 }} />
-        <StatusBar style={isDark ? 'light' : 'dark'} />
       </View>
     );
   }
 
   return (
     <>
-      <StatusBar style={isDark ? 'light' : 'dark'} />
+      <StatusBar
+        barStyle={isDark ? 'light-content' : 'dark-content'}
+        backgroundColor={theme.colors.background}
+      />
       {isAuthenticated ? <MainNavigator /> : <LoginScreen />}
     </>
   );

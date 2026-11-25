@@ -15,6 +15,7 @@ import { useAuth } from '../context/AuthContext';
 import { adminChangePassword, checkHealth } from '../services/api';
 import { getStoredApiUrl, setStoredApiUrl } from '../services/storage';
 import { API_PRESETS } from '../config/apiConfig';
+import { getNativeDeviceInfo, showNativeToast } from '../services/nativeDevice';
 import Header from '../components/Header';
 
 export default function SettingsScreen() {
@@ -330,7 +331,10 @@ export default function SettingsScreen() {
             Dr. Shiva Singh • Clinical Care Admin Mobile
           </Text>
           <Text style={[styles.infoRow, { color: theme.colors.textMuted }]}>
-            Version 1.0.0 (Expo SDK 52 • React Native 0.76)
+            Version 1.0.0 (Pure React Native • Android Native Kotlin & Java)
+          </Text>
+          <Text style={[styles.infoRow, { color: theme.colors.textMuted }]}>
+            Architecture: Kotlin Activities + Java Native Modules (Zero Expo)
           </Text>
           <Text style={[styles.infoRow, { color: theme.colors.textMuted }]}>
             Designed for Critical Care & Internal Medicine Practice
