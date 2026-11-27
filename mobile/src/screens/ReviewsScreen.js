@@ -201,8 +201,6 @@ export default function ReviewsScreen() {
       <Header
         title="Patient Reviews"
         subtitle={`${stats.total} Reviews • ⭐ ${stats.avg}`}
-        onRefresh={onRefresh}
-        isRefreshing={refreshing}
       />
 
       {/* KPI Overview Banner */}
@@ -266,7 +264,15 @@ export default function ReviewsScreen() {
       ) : (
         <ScrollView
           contentContainerStyle={styles.listContent}
-          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[theme.colors.primary]} />}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              colors={[theme.colors.primary]}
+              tintColor={theme.colors.primary}
+              progressBackgroundColor={theme.colors.card}
+            />
+          }
         >
           {filteredReviews.length === 0 ? (
             <View style={[styles.emptyBox, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}>

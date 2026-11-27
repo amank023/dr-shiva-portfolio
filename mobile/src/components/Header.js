@@ -1,20 +1,28 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, Image } from 'react-native';
 import { useTheme } from '../context/ThemeContext';
 
-export default function Header({ title, subtitle, engine = 'firebase-firestore', onRefresh, isRefreshing }) {
-  const { theme, isDark, toggleTheme } = useTheme();
+const doctorAvatar = require('../../assets/doctor.jpg');
+
+export default function Header({ title, subtitle, engine = 'firebase-firestore' }) {
+  const { theme, isDark } = useTheme();
 
   const isFirestore = engine === 'firebase-firestore' || engine === 'Firebase Firestore (Cloud)';
 
   return (
     <View style={[styles.container, { backgroundColor: theme.colors.headerBg, borderColor: theme.colors.cardBorder }]}>
       <View style={styles.leftRow}>
-        <View style={[styles.avatarBox, { backgroundColor: theme.colors.primary }]}>
-          <Text style={styles.avatarText}>⚕️</Text>
+        <View style={[styles.avatarBox, { borderColor: theme.colors.primary }]}>
+          <Image
+            source={doctorAvatar}
+            style={styles.avatarImage}
+            resizeMode="cover"
+          />
+          <View style={[styles.onlineDot, { borderColor: theme.colors.headerBg }]} />
         </View>
+
         <View style={styles.titleCol}>
-          <Text style={[styles.title, { color: theme.colors.text }]}>
+          <Text style={[styles.title, { color: theme.colors.text }]} numberOfLines={1}>
             {title || 'Dr. Shiva Singh'}
           </Text>
           <View style={styles.badgeRow}>
@@ -33,30 +41,12 @@ export default function Header({ title, subtitle, engine = 'firebase-firestore',
               </Text>
             </View>
             {subtitle ? (
-              <Text style={[styles.subtitle, { color: theme.colors.textMuted }]}>
+              <Text style={[styles.subtitle, { color: theme.colors.textMuted }]} numberOfLines={1}>
                 {subtitle}
               </Text>
             ) : null}
           </View>
         </View>
-      </View>
-
-      <View style={styles.rightActions}>
-        {onRefresh ? (
-          <TouchableOpacity
-            style={[styles.actionBtn, { backgroundColor: theme.colors.badgeBg, borderColor: theme.colors.border, borderWidth: 1 }]}
-            onPress={onRefresh}
-            disabled={isRefreshing}
-          >
-            <Text style={{ fontSize: 16 }}>{isRefreshing ? '⏳' : '🔄'}</Text>
-          </TouchableOpacity>
-        ) : null}
-        <TouchableOpacity
-          style={[styles.actionBtn, { backgroundColor: theme.colors.badgeBg, borderColor: theme.colors.border, borderWidth: 1 }]}
-          onPress={toggleTheme}
-        >
-          <Text style={{ fontSize: 16 }}>{isDark ? '☀️' : '🌙'}</Text>
-        </TouchableOpacity>
       </View>
     </View>
   );
@@ -65,8 +55,8 @@ export default function Header({ title, subtitle, engine = 'firebase-firestore',
 const styles = StyleSheet.create({
   container: {
     paddingHorizontal: 16,
-    paddingTop: 12,
-    paddingBottom: 14,
+    paddingTop: 10,
+    paddingBottom: 12,
     borderBottomWidth: 1,
     flexDirection: 'row',
     alignItems: 'center',
@@ -81,24 +71,32 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 14,
-    alignItems: 'center',
-    justifyContent: 'center',
     marginRight: 12,
-    shadowColor: '#0284c7',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.25,
-    shadowRadius: 6,
-    elevation: 4
+    position: 'relative',
+    borderWidth: 1.5,
+    overflow: 'hidden'
   },
-  avatarText: {
-    fontSize: 22
+  avatarImage: {
+    width: '100%',
+    height: '100%'
+  },
+  onlineDot: {
+    position: 'absolute',
+    bottom: -1,
+    right: -1,
+    width: 11,
+    height: 11,
+    borderRadius: 6,
+    backgroundColor: '#10b981',
+    borderWidth: 2
   },
   titleCol: {
-    flex: 1
+    flex: 1,
+    justifyContent: 'center'
   },
   title: {
     fontSize: 18,
-    fontWeight: '700',
+    fontWeight: '800',
     letterSpacing: -0.3
   },
   badgeRow: {
@@ -119,18 +117,8 @@ const styles = StyleSheet.create({
     letterSpacing: 0.2
   },
   subtitle: {
-    fontSize: 11
-  },
-  rightActions: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8
-  },
-  actionBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: 10,
-    alignItems: 'center',
-    justifyContent: 'center'
+    fontSize: 11,
+    fontWeight: '500',
+    flex: 1
   }
 });

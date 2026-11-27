@@ -8,8 +8,11 @@ import {
   TextInput,
   RefreshControl,
   ActivityIndicator,
-  Alert
+  Alert,
+  Image
 } from 'react-native';
+
+const doctorAvatar = require('../../assets/doctor.jpg');
 import { useTheme } from '../context/ThemeContext';
 import { getContent, updateContent, resetContent } from '../services/api';
 import Header from '../components/Header';
@@ -128,8 +131,6 @@ export default function ContentScreen() {
       <Header
         title="Website CMS"
         subtitle="Manage Live Doctor Profile & OPD Info"
-        onRefresh={onRefresh}
-        isRefreshing={refreshing}
       />
 
       {loading ? (
@@ -140,7 +141,15 @@ export default function ContentScreen() {
       ) : (
         <ScrollView
           contentContainerStyle={styles.contentScroll}
-          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[theme.colors.primary]} />}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              colors={[theme.colors.primary]}
+              tintColor={theme.colors.primary}
+              progressBackgroundColor={theme.colors.card}
+            />
+          }
         >
           {/* Section 1: Doctor Profile */}
           <View style={[styles.sectionCard, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}>
@@ -151,6 +160,25 @@ export default function ContentScreen() {
                 <Text style={[styles.sectionSubtitle, { color: theme.colors.textMuted }]}>
                   Personal identity & medical credentials
                 </Text>
+              </View>
+            </View>
+
+            {/* Profile Photo Preview & Edit */}
+            <View style={styles.photoContainer}>
+              <Image
+                source={profile.photo && profile.photo.startsWith('http') ? { uri: profile.photo } : doctorAvatar}
+                style={styles.doctorPhotoThumb}
+                resizeMode="cover"
+              />
+              <View style={{ flex: 1 }}>
+                <Text style={[styles.label, { color: theme.colors.textSecondary }]}>PROFILE PHOTO URL</Text>
+                <TextInput
+                  style={[styles.input, { backgroundColor: theme.colors.surfaceHighlight, color: theme.colors.text, borderColor: theme.colors.border }]}
+                  value={profile.photo || '/doctor.jpg'}
+                  onChangeText={t => setProfile(p => ({ ...p, photo: t }))}
+                  placeholder="/doctor.jpg or https://..."
+                  placeholderTextColor={theme.colors.textMuted}
+                />
               </View>
             </View>
 
@@ -362,6 +390,19 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.05,
     shadowRadius: 3,
     elevation: 2
+  },
+  photoContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 14,
+    marginBottom: 12
+  },
+  doctorPhotoThumb: {
+    width: 58,
+    height: 58,
+    borderRadius: 16,
+    borderWidth: 1.5,
+    borderColor: '#0284c7'
   },
   sectionHeader: {
     flexDirection: 'row',

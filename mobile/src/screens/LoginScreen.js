@@ -11,8 +11,11 @@ import {
   ScrollView,
   KeyboardAvoidingView,
   Platform,
-  StatusBar
+  StatusBar,
+  Image
 } from 'react-native';
+
+const doctorAvatar = require('../../assets/doctor.jpg');
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { getStoredApiUrl, setStoredApiUrl } from '../services/storage';
@@ -121,8 +124,8 @@ export default function LoginScreen() {
         {/* Glow decoration header */}
         <View style={styles.headerArea}>
           <View style={[styles.avatarGlow, { backgroundColor: theme.colors.primaryLight }]}>
-            <View style={[styles.avatarBox, { backgroundColor: theme.colors.primary }]}>
-              <Text style={{ fontSize: 36 }}>🩺</Text>
+            <View style={[styles.avatarBox, { borderColor: theme.colors.primary, borderWidth: 2 }]}>
+              <Image source={doctorAvatar} style={styles.avatarImage} resizeMode="cover" />
             </View>
           </View>
           <Text style={[styles.title, { color: theme.colors.text }]}>
@@ -320,7 +323,12 @@ const styles = StyleSheet.create({
     borderRadius: 22,
     alignItems: 'center',
     justifyContent: 'center',
-    elevation: 8
+    elevation: 8,
+    overflow: 'hidden'
+  },
+  avatarImage: {
+    width: '100%',
+    height: '100%'
   },
   title: {
     fontSize: 26,

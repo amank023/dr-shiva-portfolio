@@ -124,8 +124,6 @@ export default function MessagesScreen() {
       <Header
         title="Contact Inquiries"
         subtitle={`${counts.unread} Unread Messages`}
-        onRefresh={onRefresh}
-        isRefreshing={refreshing}
       />
 
       {/* Search Input */}
@@ -182,7 +180,15 @@ export default function MessagesScreen() {
       ) : (
         <ScrollView
           contentContainerStyle={styles.listContent}
-          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[theme.colors.primary]} />}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              colors={[theme.colors.primary]}
+              tintColor={theme.colors.primary}
+              progressBackgroundColor={theme.colors.card}
+            />
+          }
         >
           {filteredMessages.length === 0 ? (
             <View style={[styles.emptyBox, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}>

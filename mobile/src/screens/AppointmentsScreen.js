@@ -188,8 +188,6 @@ export default function AppointmentsScreen({ initialOpenModal = false }) {
       <Header
         title="Appointments"
         subtitle={`${appointments.length} Total Patients`}
-        onRefresh={onRefresh}
-        isRefreshing={refreshing}
       />
 
       {/* Top Controls: Search & New Appointment Button */}
@@ -255,7 +253,15 @@ export default function AppointmentsScreen({ initialOpenModal = false }) {
       ) : (
         <ScrollView
           contentContainerStyle={styles.listContent}
-          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[theme.colors.primary]} />}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              colors={[theme.colors.primary]}
+              tintColor={theme.colors.primary}
+              progressBackgroundColor={theme.colors.card}
+            />
+          }
         >
           {filteredAppointments.length === 0 ? (
             <View style={[styles.emptyBox, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}>

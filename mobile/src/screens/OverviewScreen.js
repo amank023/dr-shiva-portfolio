@@ -65,13 +65,19 @@ export default function OverviewScreen({ onNavigateTab, onOpenNewAppointment }) 
         title="Admin Control Center"
         subtitle="Dr. Shiva Singh"
         engine={stats?.engine}
-        onRefresh={onRefresh}
-        isRefreshing={refreshing}
       />
 
       <ScrollView
         contentContainerStyle={styles.content}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[theme.colors.primary]} />}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            colors={[theme.colors.primary]}
+            tintColor={theme.colors.primary}
+            progressBackgroundColor={theme.colors.card}
+          />
+        }
       >
         {/* Quick Action Clinical Toolbar */}
         <View style={styles.quickBar}>

@@ -104,8 +104,6 @@ export default function ChatLogsScreen() {
       <Header
         title="24/7 Bot Assistant"
         subtitle={`${logs.length} Patient Transcripts`}
-        onRefresh={onRefresh}
-        isRefreshing={refreshing}
       />
 
       {/* Search & Actions Bar */}
@@ -142,7 +140,15 @@ export default function ChatLogsScreen() {
       ) : (
         <ScrollView
           contentContainerStyle={styles.listContent}
-          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[theme.colors.primary]} />}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              colors={[theme.colors.primary]}
+              tintColor={theme.colors.primary}
+              progressBackgroundColor={theme.colors.card}
+            />
+          }
         >
           {filteredLogs.length === 0 ? (
             <View style={[styles.emptyBox, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}>

@@ -8,8 +8,12 @@ import {
   TextInput,
   Switch,
   ActivityIndicator,
-  Alert
+  Alert,
+  Image,
+  RefreshControl
 } from 'react-native';
+
+const doctorAvatar = require('../../assets/doctor.jpg');
 import { useTheme } from '../context/ThemeContext';
 import { useAuth } from '../context/AuthContext';
 import { adminChangePassword, checkHealth, autoDiscoverWorkingUrl } from '../services/api';
@@ -33,6 +37,7 @@ export default function SettingsScreen() {
   const [customUrlInput, setCustomUrlInput] = useState('');
   const [testingHealth, setTestingHealth] = useState(false);
   const [healthStatus, setHealthStatus] = useState(null);
+  const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -41,6 +46,12 @@ export default function SettingsScreen() {
       setCustomUrlInput(url);
     })();
   }, []);
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await handleTestHealth();
+    setRefreshing(false);
+  };
 
   const handleChangePassword = async () => {
     if (!oldPassword.trim()) {
@@ -181,7 +192,33 @@ export default function SettingsScreen() {
         subtitle="Server, Security & Preferences"
       />
 
-      <ScrollView contentContainerStyle={styles.scrollContent}>
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            colors={[theme.colors.primary]}
+            tintColor={theme.colors.primary}
+            progressBackgroundColor={theme.colors.card}
+          />
+        }
+      >
+        {/* Doctor Identity Profile Card */}
+        <View style={[styles.card, styles.doctorCard, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}>
+          <Image source={doctorAvatar} style={styles.doctorPhoto} resizeMode="cover" />
+          <View style={{ flex: 1 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+              <Text style={[styles.doctorName, { color: theme.colors.text }]}>Dr. Shiva Singh</Text>
+              <Text style={{ fontSize: 13 }}>🩺</Text>
+            </View>
+            <Text style={[styles.doctorSpec, { color: theme.colors.primary }]}>Critical Care Specialist</Text>
+            <Text style={[styles.doctorCredentials, { color: theme.colors.textMuted }]}>
+              MBBS, B.Sc. CCM · Reg. No. 79855
+            </Text>
+          </View>
+        </View>
+
         {/* Appearance Card */}
         <View style={[styles.card, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}>
           <Text style={[styles.cardTitle, { color: theme.colors.text }]}>🎨 Appearance</Text>
@@ -414,6 +451,33 @@ const styles = StyleSheet.create({
     padding: 16,
     paddingBottom: 50,
     gap: 16
+  },
+  doctorCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 14,
+    padding: 16
+  },
+  doctorPhoto: {
+    width: 60,
+    height: 60,
+    borderRadius: 18,
+    borderWidth: 1.5,
+    borderColor: '#0284c7'
+  },
+  doctorName: {
+    fontSize: 18,
+    fontWeight: '800',
+    letterSpacing: -0.3
+  },
+  doctorSpec: {
+    fontSize: 13,
+    fontWeight: '700',
+    marginTop: 2
+  },
+  doctorCredentials: {
+    fontSize: 11,
+    marginTop: 2
   },
   card: {
     borderRadius: 16,
