@@ -190,7 +190,7 @@ export default function ChatLogsScreen() {
                   </View>
 
                   {/* Bot Bubble */}
-                  <View style={[styles.chatBubble, styles.botBubble, { backgroundColor: 'rgba(13, 148, 136, 0.08)', borderColor: 'rgba(13, 148, 136, 0.2)' }]}>
+                  <View style={[styles.chatBubble, styles.botBubble, { backgroundColor: theme.colors.primaryLight, borderColor: theme.colors.primary, borderWidth: 1 }]}>
                     <Text style={[styles.bubbleAuthor, { color: theme.colors.primary }]}>🤖 Virtual Assistant:</Text>
                     <Text style={[styles.bubbleText, { color: theme.colors.text }]}>{botReply}</Text>
                   </View>

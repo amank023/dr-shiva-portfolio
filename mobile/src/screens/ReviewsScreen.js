@@ -405,8 +405,8 @@ export default function ReviewsScreen() {
                     style={[
                       styles.starSelectBtn,
                       {
-                        backgroundColor: formData.rating >= star ? 'rgba(245, 158, 11, 0.2)' : theme.colors.surfaceHighlight,
-                        borderColor: formData.rating >= star ? '#f59e0b' : theme.colors.border
+                        backgroundColor: formData.rating >= star ? theme.colors.warningLight : theme.colors.surfaceHighlight,
+                        borderColor: formData.rating >= star ? theme.colors.warning : theme.colors.border
                       }
                     ]}
                     onPress={() => setFormData(prev => ({ ...prev, rating: star }))}

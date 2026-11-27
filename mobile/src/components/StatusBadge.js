@@ -1,37 +1,28 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
+import { useTheme } from '../context/ThemeContext';
 
 export default function StatusBadge({ status }) {
+  const { isDark } = useTheme();
+
   const getStyle = () => {
     switch (status) {
       case 'confirmed':
-        return {
-          bg: 'rgba(16, 185, 129, 0.15)',
-          border: '#10b981',
-          text: '#059669',
-          icon: '✓'
-        };
+        return isDark
+          ? { bg: '#064e3b', border: '#10b981', text: '#6ee7b7', icon: '✓' }
+          : { bg: '#dcfce7', border: '#86efac', text: '#15803d', icon: '✓' };
       case 'completed':
-        return {
-          bg: 'rgba(59, 130, 246, 0.15)',
-          border: '#3b82f6',
-          text: '#2563eb',
-          icon: '★'
-        };
+        return isDark
+          ? { bg: '#1e3a8a', border: '#3b82f6', text: '#93c5fd', icon: '★' }
+          : { bg: '#dbeafe', border: '#93c5fd', text: '#1d4ed8', icon: '★' };
       case 'cancelled':
-        return {
-          bg: 'rgba(239, 68, 68, 0.15)',
-          border: '#ef4444',
-          text: '#dc2626',
-          icon: '✕'
-        };
+        return isDark
+          ? { bg: '#7f1d1d', border: '#ef4444', text: '#fca5a5', icon: '✕' }
+          : { bg: '#fee2e2', border: '#fca5a5', text: '#b91c1c', icon: '✕' };
       default: // pending
-        return {
-          bg: 'rgba(245, 158, 11, 0.15)',
-          border: '#f59e0b',
-          text: '#d97706',
-          icon: '⏳'
-        };
+        return isDark
+          ? { bg: '#78350f', border: '#f59e0b', text: '#fde68a', icon: '⏳' }
+          : { bg: '#fef3c7', border: '#fde68a', text: '#b45309', icon: '⏳' };
     }
   };
 
@@ -51,11 +42,11 @@ const styles = StyleSheet.create({
   badge: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 8,
-    borderWidth: 0.8,
-    gap: 4
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 10,
+    borderWidth: 1,
+    gap: 5
   },
   icon: {
     fontSize: 10,
@@ -63,7 +54,7 @@ const styles = StyleSheet.create({
   },
   text: {
     fontSize: 10,
-    fontWeight: '700',
-    letterSpacing: 0.3
+    fontWeight: '800',
+    letterSpacing: 0.5
   }
 });

@@ -6,7 +6,8 @@ import {
   TouchableOpacity,
   ScrollView,
   SafeAreaView,
-  Platform
+  Platform,
+  StatusBar
 } from 'react-native';
 import { useTheme } from '../context/ThemeContext';
 import { getAdminStats } from '../services/api';
@@ -69,6 +70,7 @@ export default function MainNavigator() {
 
   return (
     <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.colors.background }]}>
+      <StatusBar barStyle={theme.dark ? 'light-content' : 'dark-content'} backgroundColor={theme.colors.headerBg} />
       <View style={styles.contentContainer}>
         {activeTab === 'overview' && (
           <OverviewScreen
@@ -160,7 +162,7 @@ export default function MainNavigator() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    paddingTop: Platform.OS === 'android' ? 24 : 0
+    paddingTop: Platform.OS === 'android' ? (StatusBar.currentHeight || 28) : 0
   },
   contentContainer: {
     flex: 1

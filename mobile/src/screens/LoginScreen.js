@@ -10,7 +10,8 @@ import {
   Modal,
   ScrollView,
   KeyboardAvoidingView,
-  Platform
+  Platform,
+  StatusBar
 } from 'react-native';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
@@ -115,6 +116,7 @@ export default function LoginScreen() {
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       style={[styles.container, { backgroundColor: theme.colors.background }]}
     >
+      <StatusBar barStyle={theme.dark ? 'light-content' : 'dark-content'} backgroundColor={theme.colors.background} />
       <ScrollView contentContainerStyle={styles.scroll}>
         {/* Glow decoration header */}
         <View style={styles.headerArea}>
@@ -188,7 +190,7 @@ export default function LoginScreen() {
       {/* Backend Settings Modal */}
       <Modal visible={modalVisible} animationType="slide" transparent>
         <View style={styles.modalOverlay}>
-          <View style={[styles.modalCard, { backgroundColor: theme.colors.card }]}>
+          <View style={[styles.modalCard, { backgroundColor: theme.colors.card, borderColor: theme.colors.cardBorder, borderWidth: 1 }]}>
             <Text style={[styles.modalTitle, { color: theme.colors.text }]}>
               Backend Connection Setup
             </Text>
@@ -196,24 +198,30 @@ export default function LoginScreen() {
               Select where Dr. Shiva's backend is running:
             </Text>
 
-            {(PRESET_ENDPOINTS || []).map(p => (
-              <TouchableOpacity
-                key={p.id}
-                style={[
-                  styles.presetItem,
-                  { borderColor: apiUrl === p.url ? theme.colors.primary : theme.colors.cardBorder }
-                ]}
-                onPress={() => selectPreset(p)}
-              >
-                <View style={{ flex: 1 }}>
-                  <Text style={[styles.presetName, { color: theme.colors.text }]}>{p.name}</Text>
-                  <Text style={[styles.presetUrl, { color: theme.colors.textMuted }]}>{p.url}</Text>
-                </View>
-                {apiUrl === p.url && (
-                  <Text style={{ color: theme.colors.primary, fontWeight: 'bold' }}>✓ Active</Text>
-                )}
-              </TouchableOpacity>
-            ))}
+            {(PRESET_ENDPOINTS || []).map(p => {
+              const isSelected = apiUrl === p.url;
+              return (
+                <TouchableOpacity
+                  key={p.id}
+                  style={[
+                    styles.presetItem,
+                    {
+                      backgroundColor: isSelected ? theme.colors.primaryLight : theme.colors.surfaceHighlight,
+                      borderColor: isSelected ? theme.colors.primary : theme.colors.cardBorder
+                    }
+                  ]}
+                  onPress={() => selectPreset(p)}
+                >
+                  <View style={{ flex: 1 }}>
+                    <Text style={[styles.presetName, { color: theme.colors.text }]}>{p.name}</Text>
+                    <Text style={[styles.presetUrl, { color: theme.colors.textMuted }]}>{p.url}</Text>
+                  </View>
+                  {isSelected && (
+                    <Text style={{ color: theme.colors.primary, fontWeight: 'bold' }}>✓ Active</Text>
+                  )}
+                </TouchableOpacity>
+              );
+            })}
 
             <Text style={[styles.label, { color: theme.colors.textSecondary, marginTop: 12 }]}>
               CUSTOM API URL:
@@ -223,19 +231,25 @@ export default function LoginScreen() {
               onChangeText={setApiUrl}
               placeholder="http://192.168.1.xxx:5000/api"
               placeholderTextColor={theme.colors.textMuted}
-              style={[styles.inputCustom, { color: theme.colors.text, borderColor: theme.colors.inputBorder }]}
+              style={[styles.inputCustom, { backgroundColor: theme.colors.inputBg, color: theme.colors.text, borderColor: theme.colors.inputBorder }]}
               autoCapitalize="none"
             />
 
             {pingStatus ? (
               <View style={[
                 styles.pingBox,
-                { backgroundColor: pingStatus.state === 'ok' ? 'rgba(16, 185, 129, 0.15)' : 'rgba(239, 68, 68, 0.15)' }
+                {
+                  backgroundColor: pingStatus.state === 'ok'
+                    ? (theme.dark ? '#064e3b' : '#dcfce7')
+                    : (theme.dark ? '#7f1d1d' : '#fee2e2'),
+                  borderColor: pingStatus.state === 'ok' ? '#10b981' : '#ef4444',
+                  borderWidth: 1
+                }
               ]}>
                 <Text style={{
-                  color: pingStatus.state === 'ok' ? '#059669' : '#dc2626',
+                  color: pingStatus.state === 'ok' ? (theme.dark ? '#6ee7b7' : '#059669') : (theme.dark ? '#fca5a5' : '#dc2626'),
                   fontSize: 12,
-                  fontWeight: '600'
+                  fontWeight: '700'
                 }}>
                   {pingStatus.message}
                 </Text>
@@ -244,14 +258,17 @@ export default function LoginScreen() {
 
             <View style={styles.modalBtnRow}>
               <TouchableOpacity
-                style={[styles.modalTestBtn, { borderColor: '#10b981', backgroundColor: 'rgba(16, 185, 129, 0.1)' }]}
+                style={[styles.modalTestBtn, {
+                  borderColor: '#10b981',
+                  backgroundColor: theme.dark ? '#064e3b' : '#dcfce7'
+                }]}
                 onPress={handleAutoDetect}
                 disabled={pinging}
               >
-                <Text style={{ color: '#10b981', fontWeight: '700' }}>⚡ Auto-Detect</Text>
+                <Text style={{ color: theme.dark ? '#6ee7b7' : '#059669', fontWeight: '700' }}>⚡ Auto-Detect</Text>
               </TouchableOpacity>
               <TouchableOpacity
-                style={[styles.modalTestBtn, { borderColor: theme.colors.primary }]}
+                style={[styles.modalTestBtn, { borderColor: theme.colors.primary, backgroundColor: theme.colors.surfaceHighlight }]}
                 onPress={() => handleTestConnection()}
                 disabled={pinging}
               >

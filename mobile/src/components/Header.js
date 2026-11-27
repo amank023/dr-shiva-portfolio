@@ -19,10 +19,16 @@ export default function Header({ title, subtitle, engine = 'firebase-firestore',
           </Text>
           <View style={styles.badgeRow}>
             <View style={[styles.engineBadge, {
-              backgroundColor: isFirestore ? 'rgba(245, 158, 11, 0.15)' : 'rgba(14, 165, 233, 0.15)',
-              borderColor: isFirestore ? '#f59e0b' : '#0ea5e9'
+              backgroundColor: isFirestore
+                ? (isDark ? '#451a03' : '#fef3c7')
+                : (isDark ? '#0c2b45' : '#e0f2fe'),
+              borderColor: isFirestore ? '#f59e0b' : '#38bdf8'
             }]}>
-              <Text style={[styles.engineText, { color: isFirestore ? '#d97706' : '#0284c7' }]}>
+              <Text style={[styles.engineText, {
+                color: isFirestore
+                  ? (isDark ? '#fbbf24' : '#b45309')
+                  : (isDark ? '#38bdf8' : '#0369a1')
+              }]}>
                 {isFirestore ? '🔥 Firestore' : '📁 LowDB'}
               </Text>
             </View>
@@ -38,7 +44,7 @@ export default function Header({ title, subtitle, engine = 'firebase-firestore',
       <View style={styles.rightActions}>
         {onRefresh ? (
           <TouchableOpacity
-            style={[styles.actionBtn, { backgroundColor: theme.colors.badgeBg }]}
+            style={[styles.actionBtn, { backgroundColor: theme.colors.badgeBg, borderColor: theme.colors.border, borderWidth: 1 }]}
             onPress={onRefresh}
             disabled={isRefreshing}
           >
@@ -46,7 +52,7 @@ export default function Header({ title, subtitle, engine = 'firebase-firestore',
           </TouchableOpacity>
         ) : null}
         <TouchableOpacity
-          style={[styles.actionBtn, { backgroundColor: theme.colors.badgeBg }]}
+          style={[styles.actionBtn, { backgroundColor: theme.colors.badgeBg, borderColor: theme.colors.border, borderWidth: 1 }]}
           onPress={toggleTheme}
         >
           <Text style={{ fontSize: 16 }}>{isDark ? '☀️' : '🌙'}</Text>
@@ -64,7 +70,7 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'between'
+    justifyContent: 'space-between'
   },
   leftRow: {
     flexDirection: 'row',

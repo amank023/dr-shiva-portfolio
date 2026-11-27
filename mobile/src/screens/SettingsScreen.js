@@ -266,17 +266,27 @@ export default function SettingsScreen() {
           {/* Test Health & Auto-Detect Buttons */}
           <View style={{ flexDirection: 'row', gap: 10, marginBottom: 10 }}>
             <TouchableOpacity
-              style={[styles.testPingBtn, { flex: 1, borderColor: '#10b981', backgroundColor: 'rgba(16, 185, 129, 0.1)' }]}
+              style={[
+                styles.testPingBtn,
+                {
+                  flex: 1,
+                  borderColor: '#10b981',
+                  backgroundColor: theme.dark ? '#064e3b' : '#dcfce7'
+                }
+              ]}
               onPress={handleAutoDetect}
               disabled={testingHealth}
             >
-              <Text style={[styles.testPingText, { color: '#10b981', fontWeight: '700' }]}>
+              <Text style={[styles.testPingText, { color: theme.dark ? '#6ee7b7' : '#059669', fontWeight: '700' }]}>
                 ⚡ Auto-Detect
               </Text>
             </TouchableOpacity>
 
             <TouchableOpacity
-              style={[styles.testPingBtn, { flex: 1, borderColor: theme.colors.border }]}
+              style={[
+                styles.testPingBtn,
+                { flex: 1, borderColor: theme.colors.border, backgroundColor: theme.colors.surfaceHighlight }
+              ]}
               onPress={handleTestHealth}
               disabled={testingHealth}
             >
@@ -296,12 +306,14 @@ export default function SettingsScreen() {
               style={[
                 styles.healthBox,
                 {
-                  backgroundColor: healthStatus.ok ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.1)',
+                  backgroundColor: healthStatus.ok
+                    ? (theme.dark ? '#064e3b' : '#dcfce7')
+                    : (theme.dark ? '#7f1d1d' : '#fee2e2'),
                   borderColor: healthStatus.ok ? '#10b981' : '#ef4444'
                 }
               ]}
             >
-              <Text style={[styles.healthTitle, { color: healthStatus.ok ? '#10b981' : '#ef4444' }]}>
+              <Text style={[styles.healthTitle, { color: healthStatus.ok ? (theme.dark ? '#6ee7b7' : '#059669') : (theme.dark ? '#fca5a5' : '#dc2626') }]}>
                 {healthStatus.ok ? '✅ Server Connected' : '❌ Connection Failed'}
               </Text>
               {healthStatus.ok ? (
@@ -314,7 +326,7 @@ export default function SettingsScreen() {
                   </Text>
                 </>
               ) : (
-                <Text style={[styles.healthDetail, { color: '#ef4444' }]}>{healthStatus.message}</Text>
+                <Text style={[styles.healthDetail, { color: theme.dark ? '#fca5a5' : '#dc2626' }]}>{healthStatus.message}</Text>
               )}
             </View>
           )}
@@ -339,7 +351,7 @@ export default function SettingsScreen() {
               >
                 <View>
                   <Text style={[styles.presetLabel, { color: isSelected ? theme.colors.primary : theme.colors.text }]}>
-                    {isSelected ? '✓ ' : ''}{p.label}
+                    {isSelected ? '✓ ' : ''}{p.name || p.label || p.id}
                   </Text>
                   <Text style={[styles.presetUrl, { color: theme.colors.textMuted }]}>{p.url}</Text>
                 </View>
