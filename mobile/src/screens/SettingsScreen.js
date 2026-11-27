@@ -12,7 +12,7 @@ import {
 } from 'react-native';
 import { useTheme } from '../context/ThemeContext';
 import { useAuth } from '../context/AuthContext';
-import { adminChangePassword, checkHealth } from '../services/api';
+import { adminChangePassword, checkHealth, autoDiscoverWorkingUrl } from '../services/api';
 import { getStoredApiUrl, setStoredApiUrl } from '../services/storage';
 import { API_PRESETS } from '../config/apiConfig';
 import { getNativeDeviceInfo, showNativeToast } from '../services/nativeDevice';
@@ -93,6 +93,39 @@ export default function SettingsScreen() {
         ok: false,
         message: err.message || 'Health ping failed',
         duration
+      });
+    } finally {
+      setTestingHealth(false);
+    }
+  };
+
+  const handleAutoDetect = async () => {
+    setTestingHealth(true);
+    setHealthStatus({
+      ok: true,
+      database: 'Scanning...',
+      message: 'Scanning USB, Wi-Fi & loopback endpoints...',
+      duration: 0
+    });
+    try {
+      const working = await autoDiscoverWorkingUrl();
+      setCurrentApiUrl(working);
+      setCustomUrlInput(working);
+      const start = Date.now();
+      const res = await checkHealth();
+      const duration = Date.now() - start;
+      setHealthStatus({
+        ok: true,
+        database: res?.database || 'Firestore Cloud',
+        message: `Auto-connected to ${working}!`,
+        duration
+      });
+      Alert.alert('Auto-Discovery Success', `Connected to active backend:\n${working}`);
+    } catch (err) {
+      setHealthStatus({
+        ok: false,
+        message: err.message || 'Auto-discovery failed',
+        duration: 0
       });
     } finally {
       setTestingHealth(false);
@@ -230,20 +263,32 @@ export default function SettingsScreen() {
             <Text style={[styles.currentUrlText, { color: theme.colors.primary }]}>{currentApiUrl || 'None'}</Text>
           </View>
 
-          {/* Test Health Ping Button */}
-          <TouchableOpacity
-            style={[styles.testPingBtn, { borderColor: theme.colors.border }]}
-            onPress={handleTestHealth}
-            disabled={testingHealth}
-          >
-            {testingHealth ? (
-              <ActivityIndicator size="small" color={theme.colors.primary} />
-            ) : (
-              <Text style={[styles.testPingText, { color: theme.colors.text }]}>
-                🩺 Ping Backend Health
+          {/* Test Health & Auto-Detect Buttons */}
+          <View style={{ flexDirection: 'row', gap: 10, marginBottom: 10 }}>
+            <TouchableOpacity
+              style={[styles.testPingBtn, { flex: 1, borderColor: '#10b981', backgroundColor: 'rgba(16, 185, 129, 0.1)' }]}
+              onPress={handleAutoDetect}
+              disabled={testingHealth}
+            >
+              <Text style={[styles.testPingText, { color: '#10b981', fontWeight: '700' }]}>
+                ⚡ Auto-Detect
               </Text>
-            )}
-          </TouchableOpacity>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.testPingBtn, { flex: 1, borderColor: theme.colors.border }]}
+              onPress={handleTestHealth}
+              disabled={testingHealth}
+            >
+              {testingHealth ? (
+                <ActivityIndicator size="small" color={theme.colors.primary} />
+              ) : (
+                <Text style={[styles.testPingText, { color: theme.colors.text }]}>
+                  🩺 Ping Health
+                </Text>
+              )}
+            </TouchableOpacity>
+          </View>
 
           {/* Health Diagnostics Output */}
           {healthStatus && (
@@ -278,7 +323,7 @@ export default function SettingsScreen() {
           <Text style={[styles.label, { color: theme.colors.textSecondary, marginTop: 14 }]}>
             SWITCH ENDPOINT PRESET:
           </Text>
-          {API_PRESETS.map((p, idx) => {
+          {(API_PRESETS || []).map((p, idx) => {
             const isSelected = currentApiUrl === p.url;
             return (
               <TouchableOpacity

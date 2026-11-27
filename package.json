@@ -7,7 +7,8 @@
     "dev": "concurrently \"cd backend && npx nodemon server.js\" \"cd frontend && npx vite --port 5173\"",
     "start": "cd backend && node server.js",
     "mobile": "cd mobile && npx react-native start",
-    "mobile:android": "cd mobile && npx react-native run-android"
+    "mobile:reverse": "adb reverse tcp:8081 tcp:8081 && adb reverse tcp:5000 tcp:5000",
+    "mobile:android": "adb reverse tcp:8081 tcp:8081 2>/dev/null; adb reverse tcp:5000 tcp:5000 2>/dev/null; cd mobile && npx react-native run-android"
   },
   "devDependencies": {
     "concurrently": "^8.2.2"

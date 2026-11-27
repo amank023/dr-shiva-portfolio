@@ -74,7 +74,7 @@ function getFromCache(key) {
   return null;
 }
 
-function setToCache(key, data, ttlMs = 12000) {
+function setToCache(key, data, ttlMs = 60000) {
   memoryCache[key] = { data, exp: Date.now() + ttlMs };
 }
 
@@ -734,70 +734,84 @@ async function updateAdminPassword(newPassword) {
 }
 
 // ─────────────────────────────────────────────────────────────
-// DASHBOARD STATS
+// DASHBOARD STATS (Optimized with request coalescing & memory caching)
 // ─────────────────────────────────────────────────────────────
+let inFlightStatsPromise = null;
+
 async function getStats() {
   const cached = getFromCache('stats');
   if (cached) return cached;
 
-  let appointments = [];
-  let reviews = [];
-  let messages = [];
-  let chatLogs = [];
-
-  try {
-    [appointments, reviews, messages, chatLogs] = await Promise.all([
-      getAppointments(),
-      getReviews(),
-      getMessages(),
-      getChatLogs()
-    ]);
-  } catch (err) {
-    console.warn('⚠️ [Stats] Fallback to local store for stats calculation:', err.message);
-    appointments = db.get('appointments').value() || [];
-    reviews      = db.get('reviews').value() || [];
-    messages     = db.get('messages').value() || [];
-    chatLogs     = db.get('chat_logs').value() || [];
+  if (inFlightStatsPromise) {
+    return inFlightStatsPromise;
   }
 
-  const safeApts = Array.isArray(appointments) ? appointments : [];
-  const safeRevs = Array.isArray(reviews) ? reviews : [];
-  const safeMsgs = Array.isArray(messages) ? messages : [];
-  const safeLogs = Array.isArray(chatLogs) ? chatLogs : [];
+  inFlightStatsPromise = (async () => {
+    try {
+      let appointments = [];
+      let reviews = [];
+      let messages = [];
+      let chatLogs = [];
 
-  const pendingApts   = safeApts.filter(a => a.status === 'pending').length;
-  const confirmedApts = safeApts.filter(a => a.status === 'confirmed').length;
-  const completedApts = safeApts.filter(a => a.status === 'completed').length;
-  const cancelledApts = safeApts.filter(a => a.status === 'cancelled').length;
+      try {
+        [appointments, reviews, messages, chatLogs] = await Promise.all([
+          getAppointments(),
+          getReviews(),
+          getMessages(),
+          getChatLogs()
+        ]);
+      } catch (err) {
+        console.warn('⚠️ [Stats] Fallback to local store for stats calculation:', err.message);
+        appointments = db.get('appointments').value() || [];
+        reviews      = db.get('reviews').value() || [];
+        messages     = db.get('messages').value() || [];
+        chatLogs     = db.get('chat_logs').value() || [];
+      }
 
-  const unreadMessages = safeMsgs.filter(m => !m.read).length;
-  const avgRating = safeRevs.length
-    ? (safeRevs.reduce((sum, r) => sum + (Number(r.rating) || 0), 0) / safeRevs.length).toFixed(1)
-    : '5.0';
+      const safeApts = Array.isArray(appointments) ? appointments : [];
+      const safeRevs = Array.isArray(reviews) ? reviews : [];
+      const safeMsgs = Array.isArray(messages) ? messages : [];
+      const safeLogs = Array.isArray(chatLogs) ? chatLogs : [];
 
-  const statsResult = {
-    engine: isFirebaseConfigured() ? 'firebase-firestore' : 'local-lowdb',
-    counts: {
-      totalAppointments: safeApts.length,
-      pendingAppointments: pendingApts,
-      confirmedAppointments: confirmedApts,
-      completedAppointments: completedApts,
-      cancelledAppointments: cancelledApts,
-      totalReviews: safeRevs.length,
-      avgRating,
-      totalMessages: safeMsgs.length,
-      unreadMessages,
-      totalChatLogs: safeLogs.length
-    },
-    recent: {
-      appointments: safeApts.slice(0, 5),
-      messages: safeMsgs.slice(0, 5),
-      reviews: safeRevs.slice(0, 5)
+      const pendingApts   = safeApts.filter(a => a.status === 'pending').length;
+      const confirmedApts = safeApts.filter(a => a.status === 'confirmed').length;
+      const completedApts = safeApts.filter(a => a.status === 'completed').length;
+      const cancelledApts = safeApts.filter(a => a.status === 'cancelled').length;
+
+      const unreadMessages = safeMsgs.filter(m => !m.read).length;
+      const avgRating = safeRevs.length
+        ? (safeRevs.reduce((sum, r) => sum + (Number(r.rating) || 0), 0) / safeRevs.length).toFixed(1)
+        : '5.0';
+
+      const statsResult = {
+        engine: isFirebaseConfigured() ? 'firebase-firestore' : 'local-lowdb',
+        counts: {
+          totalAppointments: safeApts.length,
+          pendingAppointments: pendingApts,
+          confirmedAppointments: confirmedApts,
+          completedAppointments: completedApts,
+          cancelledAppointments: cancelledApts,
+          totalReviews: safeRevs.length,
+          avgRating,
+          totalMessages: safeMsgs.length,
+          unreadMessages,
+          totalChatLogs: safeLogs.length
+        },
+        recent: {
+          appointments: safeApts.slice(0, 5),
+          messages: safeMsgs.slice(0, 5),
+          reviews: safeRevs.slice(0, 5)
+        }
+      };
+
+      setToCache('stats', statsResult, 60000);
+      return statsResult;
+    } finally {
+      inFlightStatsPromise = null;
     }
-  };
+  })();
 
-  setToCache('stats', statsResult, 10000);
-  return statsResult;
+  return inFlightStatsPromise;
 }
 
 module.exports = {

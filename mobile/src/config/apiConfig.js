@@ -1,24 +1,33 @@
 import { Platform } from 'react-native';
 
-// Recommended endpoints based on device environment
+// Current active development machine IP
+export const CURRENT_HOST_IP = '10.235.130.191';
+
+// Preset endpoints based on device environment
 export const PRESET_ENDPOINTS = [
   {
+    id: 'usb',
+    name: 'USB Cable (adb reverse)',
+    url: 'http://127.0.0.1:5000/api',
+    description: 'Direct high-speed USB connection (adb reverse tcp:5000 tcp:5000)'
+  },
+  {
     id: 'wifi',
-    name: 'Office / Local Wi-Fi (Live Backend)',
-    url: 'http://10.161.141.191:5000/api',
-    description: 'Direct connection to local Node.js server via Wi-Fi IP'
+    name: `Wi-Fi LAN (${CURRENT_HOST_IP})`,
+    url: `http://${CURRENT_HOST_IP}:5000/api`,
+    description: `Connect to development PC over local Wi-Fi (${CURRENT_HOST_IP}:5000)`
   },
   {
     id: 'emulator',
-    name: 'Android Studio Emulator',
+    name: 'Android Studio Emulator (10.0.2.2)',
     url: 'http://10.0.2.2:5000/api',
-    description: 'Standard Android emulator loopback alias'
+    description: 'Android Studio emulator host bridge'
   },
   {
     id: 'localhost',
-    name: 'Localhost (Web / USB Reverse)',
+    name: 'Localhost (Web / Loopback)',
     url: 'http://localhost:5000/api',
-    description: 'Used via adb reverse tcp:5000 tcp:5000'
+    description: 'Loopback address for web and direct local testing'
   },
   {
     id: 'cloud',
@@ -28,10 +37,19 @@ export const PRESET_ENDPOINTS = [
   }
 ];
 
+export const API_PRESETS = PRESET_ENDPOINTS;
+
+export const CANDIDATE_URLS = [
+  'http://127.0.0.1:5000/api',
+  `http://${CURRENT_HOST_IP}:5000/api`,
+  'http://localhost:5000/api',
+  'http://10.0.2.2:5000/api'
+];
+
 export const getDefaultApiUrl = () => {
-  // If running in Android emulator vs real device
   if (Platform.OS === 'android') {
-    return 'http://10.161.141.191:5000/api';
+    // Default to 127.0.0.1 (USB adb reverse is most stable for connected devices)
+    return 'http://127.0.0.1:5000/api';
   }
   return 'http://localhost:5000/api';
 };

@@ -1,10 +1,67 @@
-import { getStoredToken, getStoredApiUrl } from './storage';
+import { getStoredToken, getStoredApiUrl, setStoredApiUrl } from './storage';
+import { CANDIDATE_URLS, CURRENT_HOST_IP } from '../config/apiConfig';
 
 /**
- * Universal Request Dispatcher for Mobile Admin Client
+ * Ping an endpoint candidate to check if backend server is responsive
+ */
+export async function pingEndpoint(baseUrl, timeoutMs = 3000) {
+  if (!baseUrl) return false;
+  const cleanBase = baseUrl.replace(/\/+$/, '');
+  const testUrl = `${cleanBase}/health`;
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+
+  try {
+    const res = await fetch(testUrl, {
+      method: 'GET',
+      headers: { 'Accept': 'application/json' },
+      signal: controller.signal
+    });
+    clearTimeout(timer);
+    if (!res.ok) return false;
+    const data = await res.json();
+    return data?.status === 'ok';
+  } catch {
+    clearTimeout(timer);
+    return false;
+  }
+}
+
+/**
+ * Auto-discover the active backend server URL from candidate endpoints
+ */
+export async function autoDiscoverWorkingUrl() {
+  const current = await getStoredApiUrl();
+
+  // Test current first with short timeout
+  if (await pingEndpoint(current, 2000)) {
+    return current;
+  }
+
+  // Probe candidates in parallel
+  const candidates = CANDIDATE_URLS.filter(u => u !== current);
+  const probes = candidates.map(async (url) => {
+    const ok = await pingEndpoint(url, 3000);
+    return ok ? url : null;
+  });
+
+  const results = await Promise.all(probes);
+  const working = results.find(u => u !== null);
+
+  if (working) {
+    console.log(`[API Auto-Discovery] Switched to working backend: ${working}`);
+    await setStoredApiUrl(working);
+    return working;
+  }
+
+  return current;
+}
+
+/**
+ * Universal Request Dispatcher for Mobile Admin Client with Auto-Discovery & Retry
  */
 async function request(endpoint, options = {}) {
-  const baseUrl = await getStoredApiUrl();
+  let baseUrl = await getStoredApiUrl();
   const token = await getStoredToken();
 
   // Normalize path
@@ -22,8 +79,9 @@ async function request(endpoint, options = {}) {
     headers['Authorization'] = `Bearer ${token}`;
   }
 
+  const timeoutMs = options.timeout || 25000;
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), options.timeout || 12000);
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
 
   try {
     const response = await fetch(fullUrl, {
@@ -44,7 +102,7 @@ async function request(endpoint, options = {}) {
         data = JSON.parse(text);
       } catch {
         if (text.includes('<!DOCTYPE html>')) {
-          throw new Error('Received HTML response instead of API data. Please verify your Backend URL in Settings.');
+          throw new Error('Received HTML page instead of API response. Please verify backend URL in Settings.');
         }
         data = { message: text };
       }
@@ -61,9 +119,33 @@ async function request(endpoint, options = {}) {
     return data;
   } catch (err) {
     clearTimeout(timeoutId);
-    if (err.name === 'AbortError') {
-      throw new Error('Network timeout: The backend server took too long to respond. Verify server IP in Settings.');
+
+    // If initial attempt failed with network error or timeout, attempt auto-recovery once
+    const isNetworkOrTimeout = err.name === 'AbortError' ||
+      err.message?.includes('Network request failed') ||
+      err.message?.includes('Failed to fetch');
+
+    if (isNetworkOrTimeout && !options._retry) {
+      console.warn(`[API] Connection failed to ${fullUrl}. Attempting auto-discovery...`);
+      try {
+        const workingUrl = await autoDiscoverWorkingUrl();
+        if (workingUrl && workingUrl !== baseUrl) {
+          console.log(`[API] Retrying on newly discovered URL: ${workingUrl}`);
+          return request(endpoint, { ...options, _retry: true });
+        }
+      } catch (discoveryErr) {
+        console.warn('[API] Auto-discovery error:', discoveryErr);
+      }
     }
+
+    if (err.name === 'AbortError') {
+      throw new Error(`The backend server at ${baseUrl} took too long to respond (>25s).\n\nPlease verify:\n1. Backend is running (npm run dev)\n2. USB Cable: run 'adb reverse tcp:5000 tcp:5000'\n3. Wi-Fi: ensure phone and PC are on same Wi-Fi (${CURRENT_HOST_IP})`);
+    }
+
+    if (err.message?.includes('Network request failed') || err.message?.includes('Failed to fetch')) {
+      throw new Error(`Cannot connect to backend at ${baseUrl}.\n\nEnsure backend is running (npm run dev) and either:\n1. USB cable: 'adb reverse tcp:5000 tcp:5000' (http://127.0.0.1:5000/api)\n2. Wi-Fi: http://${CURRENT_HOST_IP}:5000/api`);
+    }
+
     throw err;
   }
 }

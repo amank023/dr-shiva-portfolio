@@ -16,7 +16,7 @@ import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { getStoredApiUrl, setStoredApiUrl } from '../services/storage';
 import { PRESET_ENDPOINTS } from '../config/apiConfig';
-import { checkHealth } from '../services/api';
+import { checkHealth, autoDiscoverWorkingUrl } from '../services/api';
 
 export default function LoginScreen() {
   const { login } = useAuth();
@@ -33,8 +33,37 @@ export default function LoginScreen() {
   const [pinging, setPinging] = useState(false);
 
   useEffect(() => {
-    getStoredApiUrl().then(setApiUrl);
+    (async () => {
+      const current = await getStoredApiUrl();
+      setApiUrl(current);
+      // Auto-probe active endpoint in background
+      try {
+        const working = await autoDiscoverWorkingUrl();
+        if (working) setApiUrl(working);
+      } catch (_) {}
+    })();
   }, []);
+
+  const handleAutoDetect = async () => {
+    setPinging(true);
+    setPingStatus({ state: 'testing', message: 'Scanning USB, Wi-Fi & loopback endpoints...' });
+    try {
+      const working = await autoDiscoverWorkingUrl();
+      setApiUrl(working);
+      const res = await checkHealth();
+      setPingStatus({
+        state: 'ok',
+        message: `Connected to ${working}! Engine: ${res.database || 'Firestore Cloud'}`
+      });
+    } catch (err) {
+      setPingStatus({
+        state: 'error',
+        message: `Auto-detect failed: ${err.message}`
+      });
+    } finally {
+      setPinging(false);
+    }
+  };
 
   const handleLogin = async () => {
     if (!password.trim()) {
@@ -167,7 +196,7 @@ export default function LoginScreen() {
               Select where Dr. Shiva's backend is running:
             </Text>
 
-            {PRESET_ENDPOINTS.map(p => (
+            {(PRESET_ENDPOINTS || []).map(p => (
               <TouchableOpacity
                 key={p.id}
                 style={[
@@ -215,6 +244,13 @@ export default function LoginScreen() {
 
             <View style={styles.modalBtnRow}>
               <TouchableOpacity
+                style={[styles.modalTestBtn, { borderColor: '#10b981', backgroundColor: 'rgba(16, 185, 129, 0.1)' }]}
+                onPress={handleAutoDetect}
+                disabled={pinging}
+              >
+                <Text style={{ color: '#10b981', fontWeight: '700' }}>⚡ Auto-Detect</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
                 style={[styles.modalTestBtn, { borderColor: theme.colors.primary }]}
                 onPress={() => handleTestConnection()}
                 disabled={pinging}
@@ -222,7 +258,7 @@ export default function LoginScreen() {
                 {pinging ? (
                   <ActivityIndicator size="small" color={theme.colors.primary} />
                 ) : (
-                  <Text style={{ color: theme.colors.primary, fontWeight: '700' }}>Ping Test ⚡</Text>
+                  <Text style={{ color: theme.colors.primary, fontWeight: '700' }}>Ping Test 🩺</Text>
                 )}
               </TouchableOpacity>
               <TouchableOpacity
